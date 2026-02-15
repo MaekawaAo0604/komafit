@@ -1,0 +1,23 @@
+{
+  "feature_name": "recurring-assignments",
+  "project_description": "定期授業パターンシステム - 講師が曜日ベースの授業パターン（毎週月曜日コマA=田中くん数学など）を登録すると、自動的に指定期間の月次カレンダーに展開される。個別の日付で例外処理（休み、振替）も可能。",
+  "created_at": "2026-02-14T00:00:00Z",
+  "updated_at": "2026-02-14T18:35:00Z",
+  "language": "japanese",
+  "phase": "implementation-started",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "ready_for_implementation": true
+}

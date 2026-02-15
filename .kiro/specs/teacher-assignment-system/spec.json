@@ -1,0 +1,23 @@
+{
+  "feature_name": "teacher-assignment-system",
+  "project_description": "入塾・時間割調整時の担当講師アサインを自動化し、Excel/スプシ運用の事故（手作業ミス、属人化、監査不可）を防ぐシステム。3つのロール（管理者、講師、閲覧）を持ち、コマ（0,1,A,B,C）とslot_id（DAY-KOMA形式）を使用した週次繰り返しの授業枠管理を行う。割当ボードで先生欄をクリックすると、ハード制約（空き枠、教科、学年、NG講師、上限）を満たす候補講師をソフト条件（負荷、希望、学年差、継続性）でソートして提示。全ての割当変更はAuditLogsに記録され、Undo機能とCSV入出力をサポート。",
+  "created_at": "2026-02-10T21:05:00+09:00",
+  "updated_at": "2026-02-11T00:00:00+09:00",
+  "language": "japanese",
+  "phase": "tasks-approved",
+  "approvals": {
+    "requirements": {
+      "generated": true,
+      "approved": true
+    },
+    "design": {
+      "generated": true,
+      "approved": true
+    },
+    "tasks": {
+      "generated": true,
+      "approved": true
+    }
+  },
+  "ready_for_implementation": true
+}
