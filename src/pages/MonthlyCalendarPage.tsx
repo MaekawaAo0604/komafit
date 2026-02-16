@@ -28,44 +28,71 @@ import type { MonthlyCalendarData, TimeSlot, Teacher, Student, RecurringAssignme
 import { gradeToDisplay } from '@/utils/gradeHelper'
 
 const PageContainer = styled.div`
-  padding: 2rem;
-  height: 100vh;
+  padding: 1.5rem;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  max-width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `
 
 const PageHeader = styled.div`
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 1rem;
   margin-bottom: 1.5rem;
   flex-shrink: 0;
+
+  @media (min-width: 1400px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
 `
 
 const Title = styled.h1`
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #111827;
   margin: 0;
-  writing-mode: horizontal-tb;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+  }
 `
 
 const HeaderControls = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 2rem;
+  gap: 0.75rem;
+  width: 100%;
+
+  @media (min-width: 1400px) {
+    width: auto;
+    gap: 1rem;
+  }
 `
 
 const BatchControls = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
+  width: 100%;
+
+  @media (min-width: 1400px) {
+    width: auto;
+  }
 `
 
 const ModeToggle = styled.button<{ $active: boolean }>`
@@ -88,6 +115,14 @@ const TeacherSelector = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
+`
+
+const ControlGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `
 
 const Select = styled.select`
@@ -111,15 +146,25 @@ const Select = styled.select`
 const MonthSelector = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  @media (min-width: 768px) {
+    gap: 1rem;
+  }
 `
 
 const MonthDisplay = styled.span`
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: #374151;
-  min-width: 150px;
+  min-width: 120px;
   text-align: center;
+
+  @media (min-width: 768px) {
+    font-size: 1.25rem;
+    min-width: 150px;
+  }
 `
 
 const CalendarContainer = styled.div`
@@ -128,12 +173,22 @@ const CalendarContainer = styled.div`
   border: 1px solid #e5e7eb;
   border-radius: 0.75rem;
   background: white;
+  min-height: 400px;
+  max-height: calc(100vh - 220px);
+
+  @media (max-width: 768px) {
+    max-height: calc(100vh - 180px);
+  }
 `
 
 const CalendarGrid = styled.div`
   display: grid;
-  grid-template-columns: 120px repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: 100px repeat(auto-fill, minmax(140px, 1fr));
   min-width: fit-content;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: 120px repeat(auto-fill, minmax(160px, 1fr));
+  }
 `
 
 const HeaderCell = styled.div<{ $sticky?: boolean }>`
@@ -168,10 +223,10 @@ const DataCell = styled.div<{
   $hasAssignment?: boolean
   $dataSource?: 'pattern' | 'assignment' | 'exception' | null
 }>`
-  padding: 0.5rem;
+  padding: 0.4rem;
   border-right: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
-  min-height: 80px;
+  min-height: 70px;
   position: relative;
   background: ${(props) => {
     // dataSourceに基づく色分け
@@ -185,6 +240,7 @@ const DataCell = styled.div<{
   }};
   cursor: pointer;
   transition: background-color 0.2s;
+  overflow: hidden;
 
   &:hover {
     background: ${(props) => {
@@ -193,6 +249,11 @@ const DataCell = styled.div<{
       if (props.$dataSource === 'exception') return '#E5E7EB' // 濃いグレー
       return props.$isAvailable === false ? '#d1d5db' : '#f3f4f6'
     }};
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0.5rem;
+    min-height: 80px;
   }
 `
 
@@ -798,15 +859,56 @@ export const MonthlyCalendarPage: React.FC = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <Title>月次カレンダー</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <Title>月次カレンダー</Title>
+          <MonthSelector>
+            <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+              ◀
+            </Button>
+            <MonthDisplay>
+              {year}年 {month}月
+            </MonthDisplay>
+            <Button variant="outline" size="sm" onClick={goToNextMonth}>
+              ▶
+            </Button>
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              今月
+            </Button>
+          </MonthSelector>
+        </div>
+
         <HeaderControls>
+          {/* 講師選択 */}
+          {isAdmin && (
+            <TeacherSelector>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
+                講師:
+              </label>
+              <Select
+                value={selectedTeacherId}
+                onChange={(e) => setSelectedTeacherId(e.target.value)}
+              >
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.name}
+                  </option>
+                ))}
+              </Select>
+            </TeacherSelector>
+          )}
+          {!isAdmin && selectedTeacher && (
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151', padding: '0.5rem' }}>
+              講師: {selectedTeacher.name}
+            </div>
+          )}
+
           {/* パターン管理ボタン */}
-          <Button variant="outline" onClick={() => setShowPatternList(true)}>
+          <Button variant="outline" size="sm" onClick={() => setShowPatternList(true)}>
             📋 パターン管理
           </Button>
 
           {/* 新規パターンボタン */}
-          <Button variant="primary" onClick={handleNewPattern}>
+          <Button variant="primary" size="sm" onClick={handleNewPattern}>
             ➕ 新規パターン
           </Button>
 
@@ -838,42 +940,7 @@ export const MonthlyCalendarPage: React.FC = () => {
             </div>
           )}
 
-          {isAdmin && (
-            <TeacherSelector>
-              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#374151' }}>
-                講師:
-              </label>
-              <Select
-                value={selectedTeacherId}
-                onChange={(e) => setSelectedTeacherId(e.target.value)}
-              >
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name}
-                  </option>
-                ))}
-              </Select>
-            </TeacherSelector>
-          )}
-          {!isAdmin && selectedTeacher && (
-            <div style={{ fontSize: '1rem', fontWeight: 600, color: '#374151' }}>
-              講師: {selectedTeacher.name}
-            </div>
-          )}
-          <MonthSelector>
-            <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
-              ◀ 前月
-            </Button>
-            <MonthDisplay>
-              {year}年 {month}月
-            </MonthDisplay>
-            <Button variant="outline" size="sm" onClick={goToNextMonth}>
-              次月 ▶
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToToday}>
-              今月
-            </Button>
-          </MonthSelector>
+          {/* 一括操作コントロール */}
           {selectedTeacherId && (
             <BatchControls>
               <ModeToggle
@@ -884,13 +951,13 @@ export const MonthlyCalendarPage: React.FC = () => {
                 {fillMode ? '🔴 埋める' : '✏️ アサイン'}
               </ModeToggle>
               <div style={{ width: '1px', height: '24px', background: '#d1d5db' }} />
-              <Button variant="outline" onClick={handleSetAllAvailable}>
+              <Button variant="outline" size="sm" onClick={handleSetAllAvailable}>
                 全開放
               </Button>
-              <Button variant="outline" onClick={handleCopyToNextMonth}>
+              <Button variant="outline" size="sm" onClick={handleCopyToNextMonth}>
                 翌月コピー
               </Button>
-              <Button variant="outline" onClick={handleClearAvailability}>
+              <Button variant="outline" size="sm" onClick={handleClearAvailability}>
                 クリア
               </Button>
             </BatchControls>

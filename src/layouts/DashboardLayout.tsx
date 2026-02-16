@@ -153,10 +153,13 @@ const MainContent = styled.main`
   flex: 1;
   margin-left: 16rem;
   padding: 0;
-  overflow: hidden;
+  min-height: 100vh;
+  width: calc(100% - 16rem);
+  overflow-x: hidden;
 
   @media (max-width: 768px) {
     margin-left: 0;
+    width: 100%;
   }
 `
 
