@@ -49,6 +49,7 @@ const Title = styled.h1`
   font-weight: 700;
   color: #111827;
   margin: 0;
+  writing-mode: horizontal-tb;
 `
 
 const HeaderControls = styled.div`
