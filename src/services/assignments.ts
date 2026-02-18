@@ -20,7 +20,6 @@ export async function assignStudent(data: {
   teacherId: string
   studentId: string
   subject: string
-  position?: number
 }): Promise<Assignment> {
   console.log('🔍 assignStudent called with:', data)
 
@@ -30,7 +29,6 @@ export async function assignStudent(data: {
     p_teacher_id: data.teacherId,
     p_student_id: data.studentId,
     p_subject: data.subject,
-    p_position: data.position ?? 1,
   }
 
   console.log('📤 Calling assign_student_v2 with params:', params)
