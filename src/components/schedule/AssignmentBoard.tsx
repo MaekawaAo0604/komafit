@@ -23,7 +23,7 @@ interface AssignmentBoardProps {
   loading?: boolean
 }
 
-const DAYS: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI']
+const DAYS: DayOfWeek[] = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
 const DAY_LABELS: Record<DayOfWeek, string> = {
   MON: '月',
   TUE: '火',
