@@ -16,6 +16,7 @@ import { selectIsAdmin, selectUser } from '@/store/authSlice'
 
 interface AssignmentBoardProps {
   slots: BoardSlot[]
+  weekStartDate?: Date
   onSelectSlot?: (slotId: string, position: number) => void
   onStudentClick?: (slotId: string, position: number, seat: 1 | 2) => void
   selectedSlotId?: string | null
@@ -243,6 +244,7 @@ const LoadingOverlay = styled.div`
 
 export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
   slots,
+  weekStartDate,
   onSelectSlot,
   onStudentClick,
   selectedSlotId,
@@ -251,8 +253,14 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
   const isAdmin = useAppSelector(selectIsAdmin)
   const user = useAppSelector(selectUser)
 
-  // Get current date for display (mock for now)
+  // Get date for a given day index (0=Monday, 4=Friday)
   const getDateForDay = (dayIndex: number) => {
+    if (weekStartDate) {
+      const targetDate = new Date(weekStartDate)
+      targetDate.setDate(weekStartDate.getDate() + dayIndex)
+      return targetDate
+    }
+    // Fallback: calculate from today
     const today = new Date()
     const currentDay = today.getDay() // 0 = Sunday
     const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay

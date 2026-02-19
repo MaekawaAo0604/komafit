@@ -7,10 +7,12 @@
 
 import { supabase } from '@/lib/supabase'
 import type {
+  BoardSlot,
   MonthlyCalendarData,
   TimeSlot,
   ExtendedMonthlyCalendarData,
 } from '@/types/entities'
+import { getWeekDates, transformCalendarToBoardSlots } from '@/utils/weeklyBoardTransform'
 
 /**
  * Get monthly calendar data
@@ -174,6 +176,40 @@ export async function deleteTimeSlot(id: string): Promise<void> {
   if (error) {
     throw new Error(`Failed to delete time slot: ${error.message}`)
   }
+}
+
+/**
+ * Get weekly board data from V2 calendar system
+ *
+ * Fetches monthly calendar data and transforms it into BoardSlot[] format
+ * for a specific week, enabling week-based navigation in the assignment board.
+ *
+ * @param weekStartDate - Monday of the target week
+ * @returns BoardSlot[] for all day×koma combinations
+ */
+export async function getWeeklyBoardData(weekStartDate: Date): Promise<BoardSlot[]> {
+  const weekDates = getWeekDates(weekStartDate)
+  const weekEnd = weekDates[weekDates.length - 1]!
+
+  // Determine which month(s) to fetch
+  const startMonth = weekStartDate.getMonth() + 1
+  const startYear = weekStartDate.getFullYear()
+  const endMonth = weekEnd.getMonth() + 1
+  const endYear = weekEnd.getFullYear()
+
+  let allData: ExtendedMonthlyCalendarData[] = []
+
+  // Fetch first month
+  const data1 = await getMonthlyCalendarWithPatterns(startYear, startMonth)
+  allData = data1
+
+  // If week spans two months, fetch the second month too
+  if (startYear !== endYear || startMonth !== endMonth) {
+    const data2 = await getMonthlyCalendarWithPatterns(endYear, endMonth)
+    allData = [...allData, ...data2]
+  }
+
+  return transformCalendarToBoardSlots(allData, weekDates)
 }
 
 // ============================================================================

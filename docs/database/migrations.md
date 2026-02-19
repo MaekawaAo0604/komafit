@@ -82,6 +82,19 @@ npm run supabase:migrate
 | `20260211100000_auto_create_availability_on_assign.sql` | 22 | 空き枠自動作成 | OPT-1 |
 | `20260211110000_batch_availability_operations.sql` | 23 | 空き枠一括操作 | OPT-2 |
 
+### バグフィックス・改善
+
+| ファイル名 | 実行順 | 内容 | 関連要件 |
+|-----------|-------|------|---------|
+| `20260216000000_fix_assign_student_v2_position.sql` | 30 | position自動計算化 | BUG-1 |
+| `20260216000001_fix_calendar_multiple_students.sql` | 31 | カレンダー複数生徒対応 | BUG-2 |
+
+### 双方向同期
+
+| ファイル名 | 実行順 | 内容 | 関連要件 |
+|-----------|-------|------|---------|
+| `20260219000000_bidirectional_sync.sql` | 32 | ボード↔カレンダー双方向同期 | SYNC-1 |
+
 ## マイグレーション詳細
 
 ### 1. initial_schema.sql
@@ -245,6 +258,53 @@ batch_set_teacher_availability(teacher_id, date_range, time_slot_ids, is_availab
 **最適化内容:**
 - 複数の空き枠を一括で設定可能
 - 例: 1週間分の空き枠を1回のRPC呼び出しで登録
+
+### 30. fix_assign_student_v2_position.sql
+
+**修正内容:**
+```sql
+-- position パラメータを削除し、自動計算に変更
+assign_student_v2(date, time_slot_id, teacher_id, student_id, subject)
+```
+
+**理由:**
+- クライアント側でのposition計算ミスによる一意制約違反を防止
+- positionは `MAX(position) + 1` で自動計算
+
+**変更点:**
+- `p_position`パラメータを削除
+- 自動計算ロジックを追加（v_calculated_position）
+
+### 31. fix_calendar_multiple_students.sql
+
+**修正内容:**
+月次カレンダー関数で複数生徒を正しく表示できるように修正
+
+**詳細:**
+（詳細はマイグレーションファイルを確認してください）
+
+### 32. bidirectional_sync.sql
+
+**双方向同期:**
+
+割り当てボード（レガシー）と月次カレンダー（V2）間の双方向同期を実装。
+
+**ヘルパー関数:**
+```sql
+day_to_dow(p_day VARCHAR(3)) RETURNS INTEGER  -- MON→1, SUN→0
+dow_to_day(p_dow INTEGER) RETURNS VARCHAR(3)  -- 1→MON, 0→SUN
+```
+
+**修正されるRPC関数:**
+- `assign_student` → 追加: `recurring_assignments`への同期
+- `unassign_student` → 追加: `recurring_assignments`の無効化
+- `assign_student_v2` → 追加: `slot_students`への同期
+- `unassign_student_v2` → 追加: `slot_students`からの削除
+
+**エッジケース処理:**
+- 講師がボードに未設定の場合、同期はスキップ
+- 該当スロットが存在しない場合、同期はスキップ
+- 座席が満席の場合、同期はスキップ
 
 ## データシード
 

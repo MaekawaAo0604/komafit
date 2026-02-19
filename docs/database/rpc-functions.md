@@ -8,6 +8,7 @@ KomaFitシステムのデータベースRPC関数一覧
 2. [V2システム（日付ベース）](#v2システム日付ベース)
 3. [ユーザー管理](#ユーザー管理)
 4. [最適化関数](#最適化関数)
+5. [ヘルパー関数（双方向同期）](#ヘルパー関数双方向同期)
 
 ## レガシーシステム（曜日ベース）
 
@@ -164,10 +165,49 @@ assign_student(
 - `p_subject`: 受講科目
 - `p_assigned_by`: 配置実行ユーザーID
 
+**処理内容:**
+1. `slot_students`テーブルにINSERT/UPDATE
+2. **【同期】** `slot_id`を分解し、`slot_teacher`から講師IDを取得
+3. **【同期】** `recurring_assignments`にパターンをINSERT（`ON CONFLICT DO NOTHING`）
+   - `start_date = CURRENT_DATE`, `end_date = NULL`, `active = TRUE`
+
+**同期条件（スキップケース）:**
+- `slot_teacher`に講師が割り当てられていない場合
+- `time_slots`テーブルに該当コマが存在しない場合
+
 **制約:**
 - コマ0/1: position 1〜6
 - コマA/B/C: position 1〜10
 - 各positionは最大2席（1対2指導）
+
+---
+
+### unassign_student
+
+**用途:** 座席から生徒を削除する（レガシー）+ 定期パターン無効化
+
+**シグネチャ:**
+```sql
+unassign_student(
+    p_slot_id VARCHAR(10),
+    p_position INTEGER,
+    p_seat INTEGER
+) RETURNS BOOLEAN
+```
+
+**パラメータ:**
+- `p_slot_id`: スロットID
+- `p_position`: ポジション
+- `p_seat`: 座席番号
+
+**処理内容:**
+1. 削除前に`student_id`を保存
+2. `slot_students`から該当レコードを削除
+3. **【同期】** `recurring_assignments`の該当パターンを`active = FALSE`に更新
+
+**同期条件（スキップケース）:**
+- `slot_teacher`に講師が割り当てられていない場合
+- 該当する有効な定期パターンが存在しない場合
 
 ---
 
@@ -256,8 +296,7 @@ assign_student_v2(
     p_time_slot_id VARCHAR(10),
     p_teacher_id UUID,
     p_student_id UUID,
-    p_subject VARCHAR(50),
-    p_position INTEGER DEFAULT 1
+    p_subject VARCHAR(50)
 ) RETURNS assignments
 ```
 
@@ -267,7 +306,8 @@ assign_student_v2(
 - `p_teacher_id`: 講師ID
 - `p_student_id`: 生徒ID
 - `p_subject`: 科目
-- `p_position`: ポジション（1 or 2、デフォルト1）
+
+**注**: `position` は自動計算されます。同じ時間帯に既に生徒がいる場合は2になり、いない場合は1になります。
 
 **制約チェック:**
 1. **講師が空いているか**
@@ -283,9 +323,16 @@ assign_student_v2(
 
 **処理内容:**
 1. 上記の制約チェック
-2. `assignments`にINSERT
+2. `assignments`にINSERT（positionは自動計算）
 3. `teacher_availability_v2`の`is_available`をFALSEに更新
 4. `audit_logs`にACTION='ASSIGN_V2'として記録
+5. **【同期】** 日付のDOWから`slot_id`を構築（例: 月曜日+コマA → `MON-A`）
+6. **【同期】** `slot_teacher`で講師のpositionを検索、`slot_students`にINSERT
+
+**同期条件（スキップケース）:**
+- `slots`テーブルに該当スロットが存在しない場合
+- `slot_teacher`に該当講師が割り当てられていない場合
+- 座席(seat)が2つとも埋まっている場合
 
 **戻り値:**
 ```sql
@@ -294,14 +341,13 @@ assignments -- 作成されたレコード
 
 **使用例:**
 ```typescript
-// 2026年2月15日のコマAに生徒をアサイン
+// 2026年2月15日のコマAに生徒をアサイン（positionは自動計算）
 const { data, error } = await supabase.rpc('assign_student_v2', {
   p_date: '2026-02-15',
   p_time_slot_id: 'A',
   p_teacher_id: teacherId,
   p_student_id: studentId,
-  p_subject: '数学',
-  p_position: 1
+  p_subject: '数学'
 })
 ```
 
@@ -333,6 +379,11 @@ unassign_student_v2(
 1. `assignments`から該当レコードを削除
 2. 同じ時間帯に他のアサインがない場合、`teacher_availability_v2`の`is_available`をTRUEに戻す
 3. `audit_logs`にACTION='UNASSIGN_V2'として記録
+4. **【同期】** 日付のDOWから`slot_id`を構築し、`slot_students`から該当生徒を削除
+
+**同期条件（スキップケース）:**
+- `slots`テーブルに該当スロットが存在しない場合
+- `slot_teacher`に該当講師が割り当てられていない場合
 
 **戻り値:**
 ```sql
@@ -870,6 +921,61 @@ const { data: exceptionId, error } = await supabase.rpc('create_assignment_excep
 - `VALIDATION_ERROR`: 日付がパターンの有効期間外
 - `DUPLICATE_EXCEPTION`: 同じ日付の例外が既に存在
 - `PERMISSION_DENIED`: 権限がない
+
+---
+
+## ヘルパー関数（双方向同期）
+
+### day_to_dow
+
+**用途:** 曜日文字列をDOW番号に変換（IMMUTABLE）
+
+**シグネチャ:**
+```sql
+day_to_dow(p_day VARCHAR(3)) RETURNS INTEGER
+```
+
+**マッピング:**
+| 入力 | 出力 |
+|------|------|
+| `SUN` | 0 |
+| `MON` | 1 |
+| `TUE` | 2 |
+| `WED` | 3 |
+| `THU` | 4 |
+| `FRI` | 5 |
+| `SAT` | 6 |
+
+---
+
+### dow_to_day
+
+**用途:** DOW番号を曜日文字列に変換（IMMUTABLE）
+
+**シグネチャ:**
+```sql
+dow_to_day(p_dow INTEGER) RETURNS VARCHAR(3)
+```
+
+**マッピング:** `day_to_dow`の逆変換
+
+---
+
+## 双方向同期の仕組み
+
+割り当てボード（レガシー）と月次カレンダー（V2）間の同期は、以下のRPC関数内で自動的に行われます。
+
+| 操作 | 関数 | 同期先 |
+|------|------|--------|
+| ボードで生徒アサイン | `assign_student` | → `recurring_assignments` にパターン作成 |
+| ボードで生徒解除 | `unassign_student` | → `recurring_assignments` を `active=FALSE` |
+| カレンダーで生徒アサイン | `assign_student_v2` | → `slot_students` にレコード作成 |
+| カレンダーで生徒解除 | `unassign_student_v2` | → `slot_students` からレコード削除 |
+
+**設計方針:**
+- トリガーではなくRPC関数内のSQL直接操作（循環更新のリスク回避）
+- 同期先のデータが不整合な場合（講師未設定、スロット未存在など）はスキップ
+- エラーにならずにメイン操作は正常完了
 
 ---
 

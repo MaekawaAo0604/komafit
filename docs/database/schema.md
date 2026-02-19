@@ -219,7 +219,7 @@ CREATE TABLE assignments (
     teacher_id UUID NOT NULL REFERENCES teachers(id) ON DELETE CASCADE,
     student_id UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
     subject VARCHAR(50) NOT NULL,         -- 科目
-    position INTEGER NOT NULL DEFAULT 1,  -- 1対2の場合は1と2
+    position INTEGER NOT NULL DEFAULT 1,  -- 自動計算（1対2の場合は1と2）
     assigned_by UUID NOT NULL REFERENCES users(id),
     assigned_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -229,8 +229,10 @@ CREATE TABLE assignments (
 ```
 
 **position:**
+- `assign_student_v2` RPC関数で自動計算される
 - 1対1の場合: position = 1
-- 1対2の場合: position = 1, 2
+- 1対2の場合: position = 1, 2（既存の最大値 + 1）
+- クライアント側でのposition指定は不要（一意制約違反を防止）
 
 **制約:**
 - 同じ(date, time_slot_id, teacher_id, position)の組み合わせは一意

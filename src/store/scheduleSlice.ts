@@ -9,12 +9,15 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import type { BoardSlot, DayOfWeek } from '@/types/entities'
 import * as slotsService from '@/services/slots'
+import { getWeeklyBoardData } from '@/services/calendar'
 
 interface ScheduleState {
   slots: Record<string, BoardSlot> // key: slotId (e.g., "MON-0")
   loading: boolean
   error: string | null
   lastUpdated: string | null
+  weekStartDate: string | null // ISO string of the Monday
+  viewMode: 'template' | 'weekly'
 }
 
 const initialState: ScheduleState = {
@@ -22,6 +25,8 @@ const initialState: ScheduleState = {
   loading: false,
   error: null,
   lastUpdated: null,
+  weekStartDate: null,
+  viewMode: 'weekly',
 }
 
 // Async thunks
@@ -30,6 +35,14 @@ export const fetchScheduleAsync = createAsyncThunk(
   async () => {
     const slots = await slotsService.getAllBoardSlots()
     return slots
+  }
+)
+
+export const fetchWeeklyScheduleAsync = createAsyncThunk(
+  'schedule/fetchWeeklySchedule',
+  async (weekStartDate: Date) => {
+    const slots = await getWeeklyBoardData(weekStartDate)
+    return { slots, weekStartDate: weekStartDate.toISOString() }
   }
 )
 
@@ -147,6 +160,12 @@ const scheduleSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    setWeekStartDate: (state, action: PayloadAction<string>) => {
+      state.weekStartDate = action.payload
+    },
+    setViewMode: (state, action: PayloadAction<'template' | 'weekly'>) => {
+      state.viewMode = action.payload
+    },
   },
   extraReducers: (builder) => {
     // Fetch schedule
@@ -166,6 +185,27 @@ const scheduleSlice = createSlice({
       .addCase(fetchScheduleAsync.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to fetch schedule'
+      })
+
+    // Fetch weekly schedule
+    builder
+      .addCase(fetchWeeklyScheduleAsync.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchWeeklyScheduleAsync.fulfilled, (state, action) => {
+        state.loading = false
+        state.slots = {}
+        action.payload.slots.forEach((slot) => {
+          state.slots[slot.id] = slot
+        })
+        state.weekStartDate = action.payload.weekStartDate
+        state.viewMode = 'weekly'
+        state.lastUpdated = new Date().toISOString()
+      })
+      .addCase(fetchWeeklyScheduleAsync.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Failed to fetch weekly schedule'
       })
 
     // Fetch single slot
@@ -266,7 +306,7 @@ const scheduleSlice = createSlice({
   },
 })
 
-export const { setSlots, updateSlot, setError, clearError } =
+export const { setSlots, updateSlot, setError, clearError, setWeekStartDate, setViewMode } =
   scheduleSlice.actions
 
 export default scheduleSlice.reducer
@@ -284,3 +324,7 @@ export const selectScheduleError = (state: { schedule: ScheduleState }) =>
   state.schedule.error
 export const selectLastUpdated = (state: { schedule: ScheduleState }) =>
   state.schedule.lastUpdated
+export const selectWeekStartDate = (state: { schedule: ScheduleState }) =>
+  state.schedule.weekStartDate
+export const selectViewMode = (state: { schedule: ScheduleState }) =>
+  state.schedule.viewMode

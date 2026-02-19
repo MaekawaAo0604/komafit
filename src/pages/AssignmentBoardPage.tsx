@@ -3,16 +3,25 @@
  *
  * Main assignment board page for managing teacher assignments.
  * Full-screen table layout optimized for desktop.
+ * Supports week-based navigation using V2 calendar data.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
-import { fetchScheduleAsync, selectAllSlots, selectScheduleLoading, assignTeacherAsync, assignStudentAsync } from '@/store/scheduleSlice'
+import {
+  fetchWeeklyScheduleAsync,
+  selectAllSlots,
+  selectScheduleLoading,
+  selectWeekStartDate,
+  assignTeacherAsync,
+  assignStudentAsync,
+} from '@/store/scheduleSlice'
 import { selectUser } from '@/store/authSlice'
 import { AssignmentBoard } from '@/components/schedule/AssignmentBoard'
 import { TeacherSelectModal } from '@/components/schedule/TeacherSelectModal'
 import { StudentSelectModal } from '@/components/schedule/StudentSelectModal'
+import { getMondayOfWeek } from '@/utils/weeklyBoardTransform'
 
 const PageContainer = styled.div`
   height: calc(100vh - 4rem);
@@ -28,18 +37,65 @@ const PageHeader = styled.div`
   flex-shrink: 0;
 `
 
+const HeaderRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+`
+
 const PageTitle = styled.h1`
   font-family: 'Space Grotesk', sans-serif;
   font-size: 2rem;
   font-weight: 700;
   color: #111827;
-  margin: 0 0 0.5rem 0;
+  margin: 0;
 `
 
-const PageDescription = styled.p`
+const WeekNav = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`
+
+const NavButton = styled.button`
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
   font-size: 0.875rem;
-  color: #6b7280;
-  margin: 0;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+  }
+
+  &:active {
+    background: #e5e7eb;
+  }
+`
+
+const TodayButton = styled(NavButton)`
+  font-weight: 600;
+  color: #2563eb;
+  border-color: #93c5fd;
+
+  &:hover {
+    background: #eff6ff;
+    border-color: #60a5fa;
+  }
+`
+
+const WeekLabel = styled.span`
+  font-size: 0.9375rem;
+  color: #374151;
+  font-weight: 500;
+  min-width: 200px;
+  text-align: center;
 `
 
 const BoardWrapper = styled.div`
@@ -48,26 +104,66 @@ const BoardWrapper = styled.div`
   padding: 1.5rem;
 `
 
+function formatWeekRange(monday: Date): string {
+  const sunday = new Date(monday)
+  sunday.setDate(monday.getDate() + 6)
+
+  const startYear = monday.getFullYear()
+  const startMonth = monday.getMonth() + 1
+  const startDay = monday.getDate()
+  const endMonth = sunday.getMonth() + 1
+  const endDay = sunday.getDate()
+
+  if (startMonth === endMonth) {
+    return `${startYear}年${startMonth}月${startDay}日 〜 ${endDay}日`
+  }
+  return `${startYear}年${startMonth}月${startDay}日 〜 ${endMonth}月${endDay}日`
+}
+
 export const AssignmentBoardPage: React.FC = () => {
   const dispatch = useAppDispatch()
   const slots = useAppSelector(selectAllSlots)
   const loading = useAppSelector(selectScheduleLoading)
   const user = useAppSelector(selectUser)
+  const weekStartDateStr = useAppSelector(selectWeekStartDate)
 
-  const [selectedSlot, setSelectedSlot] = useState<{ slotId: string; position: number } | null>(null)
-  const [showTeacherModal, setShowTeacherModal] = useState(false)
-  const [currentTeacherId, setCurrentTeacherId] = useState<string | null>(null)
+  const currentMonday = useMemo(() => getMondayOfWeek(new Date()), [])
 
-  const [selectedSeat, setSelectedSeat] = useState<{ slotId: string; position: number; seat: 1 | 2 } | null>(null)
-  const [showStudentModal, setShowStudentModal] = useState(false)
-  const [currentStudentId, setCurrentStudentId] = useState<string | null>(null)
+  const weekStartDate = useMemo(() => {
+    if (weekStartDateStr) return new Date(weekStartDateStr)
+    return currentMonday
+  }, [weekStartDateStr, currentMonday])
+
+  const [selectedSlot, setSelectedSlot] = React.useState<{ slotId: string; position: number } | null>(null)
+  const [showTeacherModal, setShowTeacherModal] = React.useState(false)
+  const [currentTeacherId, setCurrentTeacherId] = React.useState<string | null>(null)
+
+  const [selectedSeat, setSelectedSeat] = React.useState<{ slotId: string; position: number; seat: 1 | 2 } | null>(null)
+  const [showStudentModal, setShowStudentModal] = React.useState(false)
+  const [currentStudentId, setCurrentStudentId] = React.useState<string | null>(null)
 
   useEffect(() => {
-    dispatch(fetchScheduleAsync())
-  }, [dispatch])
+    dispatch(fetchWeeklyScheduleAsync(weekStartDate))
+  }, [dispatch, weekStartDate])
+
+  const handlePrevWeek = () => {
+    const prev = new Date(weekStartDate)
+    prev.setDate(prev.getDate() - 7)
+    dispatch(fetchWeeklyScheduleAsync(prev))
+  }
+
+  const handleNextWeek = () => {
+    const next = new Date(weekStartDate)
+    next.setDate(next.getDate() + 7)
+    dispatch(fetchWeeklyScheduleAsync(next))
+  }
+
+  const handleToday = () => {
+    const monday = getMondayOfWeek(new Date())
+    dispatch(fetchWeeklyScheduleAsync(monday))
+  }
 
   const handleSelectSlot = (slotId: string, position: number) => {
-    // Get current teacher for this position
     const slot = slots.find(s => s.id === slotId)
     const positionData = slot?.positions.find(p => p.position === position)
     const teacherId = positionData?.teacher?.teacherId || null
@@ -94,8 +190,8 @@ export const AssignmentBoardPage: React.FC = () => {
         assignedBy: user.id,
       })).unwrap()
 
-      // Refresh schedule
-      await dispatch(fetchScheduleAsync())
+      // Refresh with weekly data
+      dispatch(fetchWeeklyScheduleAsync(weekStartDate))
     } catch (error) {
       console.error('Failed to assign teacher:', error)
       alert('講師の割り当てに失敗しました')
@@ -103,7 +199,6 @@ export const AssignmentBoardPage: React.FC = () => {
   }
 
   const handleSelectSeat = (slotId: string, position: number, seat: 1 | 2) => {
-    // Get current student for this seat
     const slot = slots.find(s => s.id === slotId)
     const positionData = slot?.positions.find(p => p.position === position)
     const student = positionData?.students.find(s => s.seat === seat)
@@ -133,8 +228,8 @@ export const AssignmentBoardPage: React.FC = () => {
         grade,
       })).unwrap()
 
-      // Refresh schedule
-      await dispatch(fetchScheduleAsync())
+      // Refresh with weekly data
+      dispatch(fetchWeeklyScheduleAsync(weekStartDate))
       handleCloseStudentModal()
     } catch (error) {
       console.error('Failed to assign student:', error)
@@ -145,13 +240,21 @@ export const AssignmentBoardPage: React.FC = () => {
   return (
     <PageContainer>
       <PageHeader>
-        <PageTitle>割当ボード</PageTitle>
-        <PageDescription>週間スケジュールと講師割当の管理</PageDescription>
+        <HeaderRow>
+          <PageTitle>割当ボード</PageTitle>
+          <WeekNav>
+            <NavButton onClick={handlePrevWeek}>◀ 前週</NavButton>
+            <TodayButton onClick={handleToday}>今週</TodayButton>
+            <NavButton onClick={handleNextWeek}>翌週 ▶</NavButton>
+            <WeekLabel>{formatWeekRange(weekStartDate)}</WeekLabel>
+          </WeekNav>
+        </HeaderRow>
       </PageHeader>
 
       <BoardWrapper>
         <AssignmentBoard
           slots={slots}
+          weekStartDate={weekStartDate}
           onSelectSlot={handleSelectSlot}
           onStudentClick={handleSelectSeat}
           selectedSlotId={selectedSlot ? `${selectedSlot.slotId}-${selectedSlot.position}` : null}
