@@ -6,7 +6,7 @@
  * Supports week-based navigation using V2 calendar data.
  */
 
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
 import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
@@ -90,12 +90,44 @@ const TodayButton = styled(NavButton)`
   }
 `
 
-const WeekLabel = styled.span`
+const WeekLabelButton = styled.button`
   font-size: 0.9375rem;
   color: #374151;
   font-weight: 500;
   min-width: 200px;
   text-align: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+  }
+`
+
+const HiddenDateInput = styled.input`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  /* Allow click-through to open the picker */
+  &::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
 `
 
 const BoardWrapper = styled.div`
@@ -162,6 +194,23 @@ export const AssignmentBoardPage: React.FC = () => {
     const monday = getMondayOfWeek(new Date())
     dispatch(fetchWeeklyScheduleAsync(monday))
   }
+
+  const dateInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value
+    if (!val) return
+    const selected = new Date(val + 'T00:00:00')
+    const monday = getMondayOfWeek(selected)
+    dispatch(fetchWeeklyScheduleAsync(monday))
+  }
+
+  const dateInputValue = useMemo(() => {
+    const y = weekStartDate.getFullYear()
+    const m = String(weekStartDate.getMonth() + 1).padStart(2, '0')
+    const d = String(weekStartDate.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }, [weekStartDate])
 
   const handleSelectSlot = (slotId: string, position: number) => {
     const slot = slots.find(s => s.id === slotId)
@@ -246,7 +295,15 @@ export const AssignmentBoardPage: React.FC = () => {
             <NavButton onClick={handlePrevWeek}>◀ 前週</NavButton>
             <TodayButton onClick={handleToday}>今週</TodayButton>
             <NavButton onClick={handleNextWeek}>翌週 ▶</NavButton>
-            <WeekLabel>{formatWeekRange(weekStartDate)}</WeekLabel>
+            <WeekLabelButton>
+              {formatWeekRange(weekStartDate)}
+              <HiddenDateInput
+                type="date"
+                ref={dateInputRef}
+                value={dateInputValue}
+                onChange={handleDateChange}
+              />
+            </WeekLabelButton>
           </WeekNav>
         </HeaderRow>
       </PageHeader>
