@@ -110,7 +110,7 @@ BEGIN
       recurring_assignments ra
       INNER JOIN teachers t ON ra.teacher_id = t.id
       INNER JOIN students s ON ra.student_id = s.id
-      INNER JOIN time_slots ts ON ra.time_slot_id = ts.id
+      INNER JOIN time_slots ts ON ra.time_slot_id = ts.id AND ts.is_active = TRUE
       CROSS JOIN LATERAL (
         SELECT generate_series(
           v_month_start,
@@ -151,7 +151,7 @@ BEGIN
       assignments a
       INNER JOIN teachers t ON a.teacher_id = t.id
       LEFT JOIN students s ON a.student_id = s.id
-      INNER JOIN time_slots ts ON a.time_slot_id = ts.id
+      INNER JOIN time_slots ts ON a.time_slot_id = ts.id AND ts.is_active = TRUE
     WHERE
       a.date >= v_month_start
       AND a.date <= v_month_end
@@ -185,7 +185,7 @@ BEGIN
       assignment_exceptions ae
       INNER JOIN recurring_assignments ra ON ae.pattern_id = ra.id
       INNER JOIN teachers t ON ra.teacher_id = t.id
-      INNER JOIN time_slots ts ON ra.time_slot_id = ts.id
+      INNER JOIN time_slots ts ON ra.time_slot_id = ts.id AND ts.is_active = TRUE
     WHERE
       ae.date >= v_month_start
       AND ae.date <= v_month_end
