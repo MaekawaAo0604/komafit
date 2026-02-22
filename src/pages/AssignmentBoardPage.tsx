@@ -16,7 +16,7 @@ import {
   selectScheduleLoading,
   selectWeekStartDate,
   assignTeacherAsync,
-  assignStudentAsync,
+  assignStudentV2Async,
 } from '@/store/scheduleSlice'
 import { selectUser } from '@/store/authSlice'
 import { AssignmentBoard } from '@/components/schedule/AssignmentBoard'
@@ -175,6 +175,8 @@ export const AssignmentBoardPage: React.FC = () => {
   const [selectedSeat, setSelectedSeat] = React.useState<{ slotId: string; position: number; seat: 1 | 2 } | null>(null)
   const [showStudentModal, setShowStudentModal] = React.useState(false)
   const [currentStudentId, setCurrentStudentId] = React.useState<string | null>(null)
+  const [selectedSeatDate, setSelectedSeatDate] = React.useState<string | null>(null)
+  const [selectedSeatTeacherId, setSelectedSeatTeacherId] = React.useState<string | null>(null)
 
   useEffect(() => {
     dispatch(fetchWeeklyScheduleAsync(weekStartDate))
@@ -247,14 +249,25 @@ export const AssignmentBoardPage: React.FC = () => {
     }
   }
 
+  const dayOffsets: Record<string, number> = { MON: 0, TUE: 1, WED: 2, THU: 3, FRI: 4, SAT: 5, SUN: 6 }
+
   const handleSelectSeat = (slotId: string, position: number, seat: 1 | 2) => {
     const slot = slots.find(s => s.id === slotId)
     const positionData = slot?.positions.find(p => p.position === position)
     const student = positionData?.students.find(s => s.seat === seat)
     const studentId = student?.studentId || null
+    const teacherData = positionData?.teacher
+    const teacherId: string | null = teacherData ? (teacherData.teacherId ?? null) : null
+
+    const slotDay = slotId.split('-')[0] ?? ''
+    const specificDate = new Date(weekStartDate)
+    specificDate.setDate(weekStartDate.getDate() + (dayOffsets[slotDay] ?? 0))
+    const dateStr = specificDate.toISOString().split('T')[0] ?? ''
 
     setSelectedSeat({ slotId, position, seat })
     setCurrentStudentId(studentId)
+    setSelectedSeatDate(dateStr)
+    setSelectedSeatTeacherId(teacherId)
     setShowStudentModal(true)
   }
 
@@ -262,6 +275,8 @@ export const AssignmentBoardPage: React.FC = () => {
     setShowStudentModal(false)
     setSelectedSeat(null)
     setCurrentStudentId(null)
+    setSelectedSeatDate(null)
+    setSelectedSeatTeacherId(null)
   }
 
   const handleAddPosition = async (slotId: string) => {
@@ -274,17 +289,25 @@ export const AssignmentBoardPage: React.FC = () => {
     }
   }
 
-  const handleSelectStudent = async (studentId: string, subject: string, grade: number) => {
+  const handleSelectStudent = async (studentId: string, subject: string, _grade: number) => {
     if (!selectedSeat || !user) return
 
+    const timeSlotId = selectedSeat.slotId.split('-')[1] ?? ''
+
+    if (!selectedSeatTeacherId) {
+      alert('先に講師を割り当ててください')
+      return
+    }
+    if (!selectedSeatDate) return
+
     try {
-      await dispatch(assignStudentAsync({
-        slotId: selectedSeat.slotId,
-        position: selectedSeat.position,
-        seat: selectedSeat.seat,
+      await dispatch(assignStudentV2Async({
+        date: selectedSeatDate,
+        timeSlotId,
+        teacherId: selectedSeatTeacherId,
         studentId,
         subject,
-        grade,
+        weekStartDate,
       })).unwrap()
 
       handleCloseStudentModal()
@@ -343,6 +366,9 @@ export const AssignmentBoardPage: React.FC = () => {
         onSelect={handleSelectStudent}
         slotId={selectedSeat?.slotId || ''}
         currentStudentId={currentStudentId}
+        date={selectedSeatDate ?? undefined}
+        timeSlotId={selectedSeat?.slotId.split('-')[1]}
+        teacherId={selectedSeatTeacherId ?? undefined}
       />
     </PageContainer>
   )

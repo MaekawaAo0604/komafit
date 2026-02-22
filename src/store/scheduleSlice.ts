@@ -138,6 +138,29 @@ export const unassignStudentAsync = createAsyncThunk(
   }
 )
 
+export const assignStudentV2Async = createAsyncThunk(
+  'schedule/assignStudentV2',
+  async ({
+    date,
+    timeSlotId,
+    teacherId,
+    studentId,
+    subject,
+    weekStartDate,
+  }: {
+    date: string
+    timeSlotId: string
+    teacherId: string
+    studentId: string
+    subject: string
+    weekStartDate: Date
+  }) => {
+    await slotsService.assignStudentV2(date, timeSlotId, teacherId, studentId, subject)
+    const slots = await getWeeklyBoardData(weekStartDate)
+    return { slots, weekStartDate: weekStartDate.toISOString() }
+  }
+)
+
 // Slice
 const scheduleSlice = createSlice({
   name: 'schedule',
@@ -302,6 +325,26 @@ const scheduleSlice = createSlice({
       .addCase(unassignStudentAsync.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to unassign student'
+      })
+
+    // Assign student V2 (date-based)
+    builder
+      .addCase(assignStudentV2Async.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(assignStudentV2Async.fulfilled, (state, action) => {
+        state.loading = false
+        state.slots = {}
+        action.payload.slots.forEach((slot) => {
+          state.slots[slot.id] = slot
+        })
+        state.weekStartDate = action.payload.weekStartDate
+        state.lastUpdated = new Date().toISOString()
+      })
+      .addCase(assignStudentV2Async.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Failed to assign student v2'
       })
   },
 })

@@ -433,6 +433,32 @@ export async function addPositionToSlot(slotId: string): Promise<number> {
 }
 
 /**
+ * Assign student to slot using V2 date-based system (RPC)
+ *
+ * @param date - Date string (YYYY-MM-DD)
+ * @param timeSlotId - Koma code ('0', '1', 'A', 'B', 'C')
+ * @param teacherId - Teacher ID
+ * @param studentId - Student ID
+ * @param subject - Subject
+ */
+export async function assignStudentV2(
+  date: string,
+  timeSlotId: string,
+  teacherId: string,
+  studentId: string,
+  subject: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('assign_student_v2', {
+    p_date: date,
+    p_time_slot_id: timeSlotId,
+    p_teacher_id: teacherId,
+    p_student_id: studentId,
+    p_subject: subject,
+  })
+  if (error) throw new Error(`Failed to assign student v2: ${error.message}`)
+}
+
+/**
  * Get teacher assigned to slot
  *
  * @param slotId - Slot ID

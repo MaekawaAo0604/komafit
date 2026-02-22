@@ -15,6 +15,10 @@ interface StudentSelectModalProps {
   onSelect: (studentId: string, subject: string, grade: number) => void
   slotId: string
   currentStudentId?: string | null
+  // V2 対応用（指定時は assignments テーブルで重複チェック）
+  date?: string
+  timeSlotId?: string
+  teacherId?: string
 }
 
 const SUBJECTS = ['数学', '英語', '国語', '理科', '社会'] as const
@@ -202,6 +206,9 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
   onSelect,
   slotId,
   currentStudentId,
+  date,
+  timeSlotId,
+  teacherId,
 }) => {
   const [students, setStudents] = useState<Student[]>([])
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([])
@@ -216,7 +223,7 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
       setSelectedStudentId(currentStudentId || null)
       setSelectedSubject(SUBJECTS[0])
     }
-  }, [isOpen, currentStudentId])
+  }, [isOpen, currentStudentId, date, timeSlotId, teacherId])
 
   useEffect(() => {
     if (searchQuery) {
@@ -241,24 +248,38 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
 
       if (error) throw error
 
-      // Fetch students already assigned to this slot
-      const { data: assignedData, error: assignedError } = await supabase
-        .from('slot_students')
-        .select('student_id')
-        .eq('slot_id', slotId)
-
-      if (assignedError) throw assignedError
-
-      const assignedStudentIds = new Set(assignedData?.map(s => s.student_id) || [])
+      // 割当済み生徒を取得（V2: assignments、レガシー: slot_students）
+      let assignedStudentIds = new Set<string>()
+      if (date && timeSlotId && teacherId) {
+        const { data: assignedData, error: assignedError } = await supabase
+          .from('assignments')
+          .select('student_id')
+          .eq('date', date)
+          .eq('time_slot_id', timeSlotId)
+          .eq('teacher_id', teacherId)
+        if (assignedError) throw assignedError
+        const assignedRows = (assignedData ?? []) as Array<{ student_id: string }>
+        assignedStudentIds = new Set(assignedRows.map(s => s.student_id))
+      } else {
+        const { data: assignedData, error: assignedError } = await supabase
+          .from('slot_students')
+          .select('student_id')
+          .eq('slot_id', slotId)
+        if (assignedError) throw assignedError
+        const legacyRows = (assignedData ?? []) as Array<{ student_id: string }>
+        assignedStudentIds = new Set(legacyRows.map(s => s.student_id))
+      }
 
       // Filter out students already assigned to this slot (except current student)
-      const mappedStudents: Student[] = data
-        .filter(s => !assignedStudentIds.has(s.id) || s.id === currentStudentId)
-        .map(s => ({
+      const mappedStudents: Student[] = (data as any[])
+        .filter((s: any) => !assignedStudentIds.has(s.id) || s.id === currentStudentId)
+        .map((s: any) => ({
           id: s.id,
           name: s.name,
           grade: s.grade,
           active: s.active,
+          requiresOneOnOne: s.requires_one_on_one ?? false,
+          lessonLabel: s.lesson_label ?? null,
           createdAt: s.created_at,
           updatedAt: s.updated_at,
         }))

@@ -104,6 +104,7 @@ export interface SlotStudent {
   studentId: string
   subject: string
   grade: number
+  assignmentId?: string // V2 assignments.id（削除用）
   // Relations
   student?: Student
 }
