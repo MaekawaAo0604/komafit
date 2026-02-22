@@ -210,7 +210,7 @@ export const TeachersPage: React.FC = () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await listTeachers(true)
+      const data = await listTeachers(true, { includeSkills: true })
       setTeachers(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : '講師の取得に失敗しました')
