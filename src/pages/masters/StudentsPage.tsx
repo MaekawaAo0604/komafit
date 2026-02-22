@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
+import { gradeToDisplay } from '@/utils/gradeHelper'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -291,7 +292,7 @@ export const StudentsPage: React.FC = () => {
                 <div>
                   <InfoRow>
                     <InfoLabel>学年</InfoLabel>
-                    <InfoValue>{student.grade}年生</InfoValue>
+                    <InfoValue>{gradeToDisplay(student.grade)}</InfoValue>
                   </InfoRow>
                   {student.requiresOneOnOne && (
                     <InfoRow>

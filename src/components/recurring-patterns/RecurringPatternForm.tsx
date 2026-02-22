@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import styled from 'styled-components'
 import { Button } from '@/components/ui/Button'
+import { gradeToDisplay } from '@/utils/gradeHelper'
 import { Input } from '@/components/ui/Input'
 import type {
   RecurringAssignment,
@@ -428,7 +429,7 @@ export function RecurringPatternForm({
                       setShowStudentList(false)
                     }}
                   >
-                    {student.name} ({student.grade}年生)
+                    {student.name} ({gradeToDisplay(student.grade)})
                   </OptionItem>
                 ))}
               </OptionsList>
