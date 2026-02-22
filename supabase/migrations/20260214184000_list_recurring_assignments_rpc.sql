@@ -90,7 +90,7 @@ BEGIN
       WHEN 6 THEN '土曜日'
     END AS day_of_week_name,
     ra.time_slot_id,
-    ts.label AS time_slot_label,
+    ts.id AS time_slot_label,
     ra.student_id,
     s.name AS student_name,
     s.grade AS student_grade,

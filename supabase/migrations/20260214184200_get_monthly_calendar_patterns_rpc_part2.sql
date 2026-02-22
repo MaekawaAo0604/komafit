@@ -90,7 +90,7 @@ BEGIN
       t.name AS teacher_name,
       EXTRACT(DOW FROM d.date)::INTEGER AS day_of_week,
       ra.time_slot_id,
-      ts.label AS time_slot_label,
+      ts.id AS time_slot_label,
       FALSE AS is_available,
       ra.student_id,
       s.name AS student_name,
@@ -131,7 +131,7 @@ BEGIN
       t.name AS teacher_name,
       EXTRACT(DOW FROM a.date)::INTEGER AS day_of_week,
       a.time_slot_id,
-      ts.label AS time_slot_label,
+      ts.id AS time_slot_label,
       FALSE AS is_available,
       a.student_id,
       s.name AS student_name,
@@ -162,7 +162,7 @@ BEGIN
       t.name AS teacher_name,
       EXTRACT(DOW FROM ae.date)::INTEGER AS day_of_week,
       ra.time_slot_id,
-      ts.label AS time_slot_label,
+      ts.id AS time_slot_label,
       CASE
         WHEN ae.exception_type = 'cancelled' THEN TRUE
         ELSE FALSE
