@@ -12,7 +12,7 @@ import type {
   TimeSlot,
   ExtendedMonthlyCalendarData,
 } from '@/types/entities'
-import { getWeekDates, transformCalendarToBoardSlots } from '@/utils/weeklyBoardTransform'
+import { getAllBoardSlots } from '@/services/slots'
 
 /**
  * Get monthly calendar data
@@ -187,29 +187,10 @@ export async function deleteTimeSlot(id: string): Promise<void> {
  * @param weekStartDate - Monday of the target week
  * @returns BoardSlot[] for all day×koma combinations
  */
-export async function getWeeklyBoardData(weekStartDate: Date): Promise<BoardSlot[]> {
-  const weekDates = getWeekDates(weekStartDate)
-  const weekEnd = weekDates[weekDates.length - 1]!
-
-  // Determine which month(s) to fetch
-  const startMonth = weekStartDate.getMonth() + 1
-  const startYear = weekStartDate.getFullYear()
-  const endMonth = weekEnd.getMonth() + 1
-  const endYear = weekEnd.getFullYear()
-
-  let allData: ExtendedMonthlyCalendarData[] = []
-
-  // Fetch first month
-  const data1 = await getMonthlyCalendarWithPatterns(startYear, startMonth)
-  allData = data1
-
-  // If week spans two months, fetch the second month too
-  if (startYear !== endYear || startMonth !== endMonth) {
-    const data2 = await getMonthlyCalendarWithPatterns(endYear, endMonth)
-    allData = [...allData, ...data2]
-  }
-
-  return transformCalendarToBoardSlots(allData, weekDates)
+export async function getWeeklyBoardData(_weekStartDate: Date): Promise<BoardSlot[]> {
+  // Use legacy tables (slot_teacher + slot_students) which are the source of truth
+  // for the assignment board. V2 calendar data does not include legacy assignments.
+  return getAllBoardSlots()
 }
 
 // ============================================================================
