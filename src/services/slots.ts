@@ -411,6 +411,28 @@ export async function unassignTeacherFromSlot(
 }
 
 /**
+ * Add a new empty position to a slot
+ *
+ * Used when all current positions in a slot are filled and the user
+ * wants to add another teacher slot. Maximum 10 positions per slot.
+ *
+ * @param slotId - Slot ID (e.g. 'MON-A')
+ * @returns The new position number
+ * @throws Error if the slot already has 10 positions
+ */
+export async function addPositionToSlot(slotId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('add_slot_position', {
+    p_slot_id: slotId,
+  })
+
+  if (error) {
+    throw new Error(`枠の追加に失敗しました: ${error.message}`)
+  }
+
+  return data as number
+}
+
+/**
  * Get teacher assigned to slot
  *
  * @param slotId - Slot ID

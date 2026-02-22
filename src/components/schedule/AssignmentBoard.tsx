@@ -19,6 +19,7 @@ interface AssignmentBoardProps {
   weekStartDate?: Date
   onSelectSlot?: (slotId: string, position: number) => void
   onStudentClick?: (slotId: string, position: number, seat: 1 | 2) => void
+  onAddPosition?: (slotId: string) => void
   selectedSlotId?: string | null
   loading?: boolean
 }
@@ -227,6 +228,30 @@ const EmptyCell = styled.span`
   user-select: none;
 `
 
+const AddPositionButton = styled.button`
+  width: 100%;
+  padding: 0.25rem;
+  margin-top: 0.25rem;
+  background: none;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  color: #6b7280;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+`
+
 const LoadingOverlay = styled.div`
   position: absolute;
   top: 0;
@@ -247,6 +272,7 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
   weekStartDate,
   onSelectSlot,
   onStudentClick,
+  onAddPosition,
   selectedSlotId,
   loading
 }) => {
@@ -368,6 +394,20 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
                 return (
                   <Td key={`${day}-${komaCode}`}>
                     <PositionsContainer>
+                      {isAdmin && slot && (() => {
+                        const allFilled = slot.positions.length > 0 &&
+                          slot.positions.every(p => !!p.teacher?.teacherId)
+                        const canAdd = allFilled && slot.positions.length < 10
+                        if (!canAdd) return null
+                        return (
+                          <AddPositionButton
+                            onClick={() => onAddPosition?.(slot.id)}
+                            disabled={!onAddPosition}
+                          >
+                            ＋ 枠を追加
+                          </AddPositionButton>
+                        )
+                      })()}
                       {positionsToShow.length > 0 ? (
                         positionsToShow.map(posNum => {
                           const positionData = slot?.positions.find(p => p.position === posNum)

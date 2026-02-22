@@ -94,33 +94,6 @@ const ForgotPassword = styled.a`
   }
 `
 
-const DemoCredentials = styled.div`
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.75rem;
-  border: 1px dashed #d1d5db;
-`
-
-const DemoTitle = styled.div`
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
-`
-
-const DemoItem = styled.div`
-  font-size: 0.875rem;
-  color: #374151;
-  margin: 0.25rem 0;
-  font-family: 'JetBrains Mono', monospace;
-
-  strong {
-    color: #111827;
-  }
-`
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -150,25 +123,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
     }
   }
 
-  const fillDemoCredentials = (role: 'admin' | 'teacher') => {
-    const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]')
-    const passwordInput = document.querySelector<HTMLInputElement>(
-      'input[name="password"]'
-    )
-
-    if (emailInput && passwordInput) {
-      if (role === 'admin') {
-        emailInput.value = 'admin@komafit.local'
-        passwordInput.value = 'admin123'
-      } else {
-        emailInput.value = 'teacher1@komafit.local'
-        passwordInput.value = 'teacher123'
-      }
-      // Trigger validation
-      emailInput.dispatchEvent(new Event('input', { bubbles: true }))
-      passwordInput.dispatchEvent(new Event('input', { bubbles: true }))
-    }
-  }
 
   return (
     <FormContainer padding="lg">
@@ -202,7 +156,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
         <Input
           label="メールアドレス"
           type="email"
-          placeholder="admin@komafit.local"
+          placeholder="メールアドレスを入力"
           error={errors.email?.message}
           fullWidth
           leftIcon={
@@ -301,32 +255,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
           ログイン
         </Button>
       </Form>
-
-      <DemoCredentials>
-        <DemoTitle>🔐 デモ用アカウント</DemoTitle>
-        <DemoItem>
-          <strong>管理者:</strong> admin@komafit.local / admin123
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fillDemoCredentials('admin')}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            入力
-          </Button>
-        </DemoItem>
-        <DemoItem>
-          <strong>講師:</strong> teacher1@komafit.local / teacher123
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fillDemoCredentials('teacher')}
-            style={{ marginLeft: '0.5rem' }}
-          >
-            入力
-          </Button>
-        </DemoItem>
-      </DemoCredentials>
     </FormContainer>
   )
 }

@@ -160,10 +160,10 @@ function mapRecurringAssignmentFromDb(dbPattern: any): RecurringAssignment {
     createdAt: dbPattern.created_at,
     updatedAt: dbPattern.updated_at,
     createdBy: dbPattern.created_by,
-    // Include related data if present
-    teacher: dbPattern.teacher,
-    student: dbPattern.student,
-    timeSlot: dbPattern.time_slot || dbPattern.timeSlot,
+    // Include related data if present (support both nested objects and flat DB fields)
+    teacher: dbPattern.teacher || (dbPattern.teacher_name ? { name: dbPattern.teacher_name } : undefined),
+    student: dbPattern.student || (dbPattern.student_name ? { name: dbPattern.student_name, grade: dbPattern.student_grade } : undefined),
+    timeSlot: dbPattern.time_slot || dbPattern.timeSlot || (dbPattern.time_slot_id ? { id: dbPattern.time_slot_id } : undefined),
     createdByUser: dbPattern.created_by_user || dbPattern.createdByUser,
   }
 }

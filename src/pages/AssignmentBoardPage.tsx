@@ -11,6 +11,7 @@ import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
 import {
   fetchWeeklyScheduleAsync,
+  fetchSlotAsync,
   selectAllSlots,
   selectScheduleLoading,
   selectWeekStartDate,
@@ -22,6 +23,7 @@ import { AssignmentBoard } from '@/components/schedule/AssignmentBoard'
 import { TeacherSelectModal } from '@/components/schedule/TeacherSelectModal'
 import { StudentSelectModal } from '@/components/schedule/StudentSelectModal'
 import { getMondayOfWeek } from '@/utils/weeklyBoardTransform'
+import { addPositionToSlot } from '@/services/slots'
 
 const PageContainer = styled.div`
   height: calc(100vh - 4rem);
@@ -239,8 +241,6 @@ export const AssignmentBoardPage: React.FC = () => {
         assignedBy: user.id,
       })).unwrap()
 
-      // Refresh with weekly data
-      dispatch(fetchWeeklyScheduleAsync(weekStartDate))
     } catch (error) {
       console.error('Failed to assign teacher:', error)
       alert('講師の割り当てに失敗しました')
@@ -264,6 +264,16 @@ export const AssignmentBoardPage: React.FC = () => {
     setCurrentStudentId(null)
   }
 
+  const handleAddPosition = async (slotId: string) => {
+    try {
+      await addPositionToSlot(slotId)
+      dispatch(fetchSlotAsync(slotId))
+    } catch (error) {
+      console.error('Failed to add position:', error)
+      alert('枠の追加に失敗しました')
+    }
+  }
+
   const handleSelectStudent = async (studentId: string, subject: string, grade: number) => {
     if (!selectedSeat || !user) return
 
@@ -277,8 +287,6 @@ export const AssignmentBoardPage: React.FC = () => {
         grade,
       })).unwrap()
 
-      // Refresh with weekly data
-      dispatch(fetchWeeklyScheduleAsync(weekStartDate))
       handleCloseStudentModal()
     } catch (error) {
       console.error('Failed to assign student:', error)
@@ -314,6 +322,7 @@ export const AssignmentBoardPage: React.FC = () => {
           weekStartDate={weekStartDate}
           onSelectSlot={handleSelectSlot}
           onStudentClick={handleSelectSeat}
+          onAddPosition={handleAddPosition}
           selectedSlotId={selectedSlot ? `${selectedSlot.slotId}-${selectedSlot.position}` : null}
           loading={loading}
         />
