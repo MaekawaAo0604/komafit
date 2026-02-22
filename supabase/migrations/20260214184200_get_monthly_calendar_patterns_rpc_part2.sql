@@ -201,34 +201,34 @@ BEGIN
     SELECT
       *,
       ROW_NUMBER() OVER (
-        PARTITION BY date, time_slot_id, teacher_id
+        PARTITION BY combined_data.date, combined_data.time_slot_id, combined_data.teacher_id
         ORDER BY priority ASC  -- 優先度が低い値（1=最高）が先
       ) AS row_num
     FROM combined_data
   )
 
   SELECT
-    date,
-    teacher_id,
-    teacher_name,
-    day_of_week,
-    time_slot_id,
-    time_slot_label,
-    is_available,
-    student_id,
-    student_name,
-    student_grade,
-    subject,
-    position,
-    pattern_id,
-    data_source,
-    exception_type
+    ranked_data.date,
+    ranked_data.teacher_id,
+    ranked_data.teacher_name,
+    ranked_data.day_of_week,
+    ranked_data.time_slot_id,
+    ranked_data.time_slot_label,
+    ranked_data.is_available,
+    ranked_data.student_id,
+    ranked_data.student_name,
+    ranked_data.student_grade,
+    ranked_data.subject,
+    ranked_data."position",
+    ranked_data.pattern_id,
+    ranked_data.data_source,
+    ranked_data.exception_type
   FROM ranked_data
   WHERE row_num = 1  -- 各日付・コマ・講師の組み合わせで優先度が最も高いレコードのみ
   ORDER BY
-    date ASC,
-    time_slot_id ASC,
-    teacher_name ASC;
+    ranked_data.date ASC,
+    ranked_data.time_slot_id ASC,
+    ranked_data.teacher_name ASC;
 
 END;
 $$;
