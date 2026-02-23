@@ -24,7 +24,7 @@ import { selectUser } from '@/store/authSlice'
 import { AssignmentBoard } from '@/components/schedule/AssignmentBoard'
 import { TeacherSelectModal } from '@/components/schedule/TeacherSelectModal'
 import { StudentSelectModal } from '@/components/schedule/StudentSelectModal'
-import { getMondayOfWeek } from '@/utils/weeklyBoardTransform'
+import { getMondayOfWeek, formatDateStr } from '@/utils/weeklyBoardTransform'
 import { addPositionToSlot } from '@/services/slots'
 
 const PageContainer = styled.div`
@@ -309,7 +309,7 @@ export const AssignmentBoardPage: React.FC = () => {
     const slotDay = slotId.split('-')[0] ?? ''
     const specificDate = new Date(weekStartDate)
     specificDate.setDate(weekStartDate.getDate() + (dayOffsets[slotDay] ?? 0))
-    const dateStr = specificDate.toISOString().split('T')[0] ?? ''
+    const dateStr = formatDateStr(specificDate)
 
     setSelectedSeat({ slotId, position, seat })
     setCurrentStudentId(studentId)

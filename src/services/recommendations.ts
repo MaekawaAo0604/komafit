@@ -7,6 +7,7 @@
 
 import { supabase } from '@/lib/supabase'
 import type { Teacher, SlotStudent } from '@/types/entities'
+import { formatDateStr } from '@/utils/weeklyBoardTransform'
 
 // ============================================================================
 // Types
@@ -156,7 +157,7 @@ async function getAvailabilityForSlot(day: string, timeSlotId: string) {
   const dayIndex = days.indexOf(day as string)
   const targetDate = new Date(monday)
   targetDate.setDate(monday.getDate() + (dayIndex >= 0 ? dayIndex : 0))
-  const dateStr = targetDate.toISOString().split('T')[0]
+  const dateStr = formatDateStr(targetDate)
 
   return supabase
     .from('teacher_availability_v2')

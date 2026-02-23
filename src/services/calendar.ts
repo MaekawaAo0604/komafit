@@ -16,6 +16,7 @@ import type {
   SlotTeacher,
 } from '@/types/entities'
 import { getAllSlots } from '@/services/slots'
+import { formatDateStr } from '@/utils/weeklyBoardTransform'
 
 /**
  * Get monthly calendar data
@@ -202,8 +203,8 @@ export async function getWeeklyBoardData(weekStartDate: Date): Promise<BoardSlot
     .select('*, teachers(*), users(*)')
   const slotTeachers = (slotTeachersRaw ?? []) as any[]
 
-  const weekStartStr = weekStartDate.toISOString().split('T')[0]
-  const weekEndStr = weekEnd.toISOString().split('T')[0]
+  const weekStartStr = formatDateStr(weekStartDate)
+  const weekEndStr = formatDateStr(weekEnd)
   const { data: weekAssignmentsRaw } = await supabase
     .from('assignments')
     .select('*, students(*)')
@@ -220,7 +221,7 @@ export async function getWeeklyBoardData(weekStartDate: Date): Promise<BoardSlot
     const offset = dayOffsets[slot.day] ?? 0
     const specificDate = new Date(weekStartDate)
     specificDate.setDate(weekStartDate.getDate() + offset)
-    const dateStr = specificDate.toISOString().split('T')[0]
+    const dateStr = formatDateStr(specificDate)
 
     const defaultPositions = slot.komaCode === '0' || slot.komaCode === '1' ? 6 : 10
     const actualMax = slotTeachers
