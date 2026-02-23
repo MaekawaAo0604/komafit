@@ -34,7 +34,8 @@ const FormContainer = styled.div`
   flex-direction: column;
   gap: 1.5rem;
   padding: 1.5rem;
-  max-height: 70vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 `
 
@@ -84,12 +85,21 @@ const SkillItem = styled.div`
   align-items: end;
 `
 
+const StyledForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+`
+
 const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  padding-top: 1rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
 `
 
 const ErrorText = styled.p`
@@ -199,7 +209,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <StyledForm onSubmit={handleSubmit}>
       <FormContainer>
         <FormGroup>
           <Label htmlFor="name">講師名 *</Label>
@@ -364,6 +374,6 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
           {teacher ? '更新' : '作成'}
         </Button>
       </ButtonGroup>
-    </form>
+    </StyledForm>
   )
 }
