@@ -399,20 +399,6 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
                 return (
                   <Td key={`${day}-${komaCode}`}>
                     <PositionsContainer>
-                      {isAdmin && slot && (() => {
-                        const allFilled = slot.positions.length > 0 &&
-                          slot.positions.every(p => !!p.teacher?.teacherId)
-                        const canAdd = allFilled && slot.positions.length < 10
-                        if (!canAdd) return null
-                        return (
-                          <AddPositionButton
-                            onClick={() => onAddPosition?.(slot.id)}
-                            disabled={!onAddPosition}
-                          >
-                            ＋ 枠を追加
-                          </AddPositionButton>
-                        )
-                      })()}
                       {positionsToShow.length > 0 ? (
                         positionsToShow.map(posNum => {
                           const positionData = slot?.positions.find(p => p.position === posNum)
@@ -476,6 +462,14 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
                             </SeatRow>
                           </SeatsContainer>
                         </PositionRow>
+                      )}
+                      {isAdmin && slot && slot.positions.length < 10 && (
+                        <AddPositionButton
+                          onClick={() => onAddPosition?.(slot.id)}
+                          disabled={!onAddPosition}
+                        >
+                          ＋ 枠を追加
+                        </AddPositionButton>
                       )}
                     </PositionsContainer>
                   </Td>
