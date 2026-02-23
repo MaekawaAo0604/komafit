@@ -15,6 +15,7 @@ interface TeacherSelectModalProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (teacherId: string) => void
+  onRemove?: () => void
   slotId: string
   position: number
   currentTeacherId?: string | null
@@ -176,10 +177,28 @@ const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   `}
 `
 
+const RemoveButton = styled.button`
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+  background: #fef2f2;
+  color: #ef4444;
+  margin-right: auto;
+
+  &:hover {
+    background: #fee2e2;
+  }
+`
+
 export const TeacherSelectModal: React.FC<TeacherSelectModalProps> = ({
   isOpen,
   onClose,
   onSelect,
+  onRemove,
   slotId,
   position,
   currentTeacherId,
@@ -361,6 +380,11 @@ export const TeacherSelectModal: React.FC<TeacherSelectModalProps> = ({
         </Content>
 
         <Footer>
+          {currentTeacherId && onRemove && (
+            <RemoveButton onClick={onRemove}>
+              割り当て解除
+            </RemoveButton>
+          )}
           <Button $variant="secondary" onClick={onClose}>
             キャンセル
           </Button>

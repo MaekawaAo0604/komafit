@@ -16,6 +16,7 @@ import {
   selectScheduleLoading,
   selectWeekStartDate,
   assignTeacherAsync,
+  unassignTeacherAsync,
   assignStudentV2Async,
   unassignStudentV2Async,
 } from '@/store/scheduleSlice'
@@ -377,6 +378,26 @@ export const AssignmentBoardPage: React.FC = () => {
     }
   }
 
+  const handleRemoveTeacher = async () => {
+    if (!selectedSlot || !user) return
+    if (!currentTeacherId) return
+
+    if (!window.confirm('この講師の割り当てを解除しますか？')) return
+
+    try {
+      await dispatch(unassignTeacherAsync({
+        slotId: selectedSlot.slotId,
+        position: selectedSlot.position,
+        assignedBy: user.id,
+      })).unwrap()
+
+      handleCloseModal()
+    } catch (error) {
+      console.error('Failed to unassign teacher:', error)
+      alert('講師の割り当て解除に失敗しました')
+    }
+  }
+
   const handleRemoveStudent = async () => {
     if (!currentAssignmentId) {
       alert('削除対象のアサインが見つかりません')
@@ -436,6 +457,7 @@ export const AssignmentBoardPage: React.FC = () => {
         isOpen={showTeacherModal}
         onClose={handleCloseModal}
         onSelect={handleSelectTeacher}
+        onRemove={currentTeacherId ? handleRemoveTeacher : undefined}
         slotId={selectedSlot?.slotId || ''}
         position={selectedSlot?.position || 0}
         currentTeacherId={currentTeacherId}
