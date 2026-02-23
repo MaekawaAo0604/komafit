@@ -26,6 +26,10 @@ const PageContainer = styled.div`
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
 `
 
 const PageHeader = styled.div`
@@ -33,6 +37,12 @@ const PageHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
 `
 
 const Title = styled.h1`
@@ -46,6 +56,11 @@ const Controls = styled.div`
   display: flex;
   gap: 1rem;
   align-items: center;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 `
 
 const TeacherSelect = styled.select`
@@ -57,6 +72,11 @@ const TeacherSelect = styled.select`
   background: white;
   cursor: pointer;
   min-width: 200px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    min-width: unset;
+  }
 
   &:focus {
     outline: none;
@@ -87,13 +107,15 @@ const BatchActions = styled.div`
   background: #f9fafb;
   border-radius: 0.75rem;
   border: 1px solid #e5e7eb;
+  flex-wrap: wrap;
 `
 
 const CalendarContainer = styled.div`
   background: white;
   border-radius: 0.75rem;
   border: 1px solid #e5e7eb;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 `
 
@@ -101,6 +123,7 @@ const CalendarGrid = styled.div`
   display: grid;
   grid-template-columns: 120px repeat(7, 1fr);
   border-collapse: collapse;
+  min-width: 600px;
 `
 
 const HeaderCell = styled.div`

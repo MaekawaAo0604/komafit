@@ -4,7 +4,7 @@
  * Main application layout with sidebar navigation.
  */
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from '@/store/hooks'
@@ -26,6 +26,10 @@ const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
   background: #f9fafb;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `
 
 const Sidebar = styled.aside`
@@ -163,6 +167,77 @@ const MainContent = styled.main`
   }
 `
 
+const MobileHeader = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+  }
+`
+
+const HamburgerButton = styled.button`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 0.5rem;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: #374151;
+    border-radius: 2px;
+  }
+`
+
+const MobileOverlay = styled.div<{ $isOpen: boolean }>`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: ${props => props.$isOpen ? 'block' : 'none'};
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+  }
+`
+
+const MobileSidebar = styled.aside<{ $isOpen: boolean }>`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 16rem;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid #e5e7eb;
+    z-index: 1050;
+    overflow-y: auto;
+    transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+    transition: transform 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+`
+
 const roleLabels: Record<string, string> = {
   admin: '管理者',
   teacher: '講師',
@@ -177,6 +252,12 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   const role = useAppSelector(selectRole)
   const isAdmin = useAppSelector(selectIsAdmin)
   const isTeacher = useAppSelector(selectIsTeacher)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   const handleLogout = async () => {
     try {
@@ -189,20 +270,39 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const isActive = (path: string) => location.pathname === path
 
-  return (
-    <LayoutContainer>
-      <Sidebar>
-        <SidebarHeader>
-          <Logo>
-            <LogoIcon>🎓</LogoIcon>
-            KomaFit
-          </Logo>
-        </SidebarHeader>
+  const sidebarContent = (
+    <>
+      <SidebarHeader>
+        <Logo>
+          <LogoIcon>🎓</LogoIcon>
+          KomaFit
+        </Logo>
+      </SidebarHeader>
 
-        <SidebarNav>
-          <NavSection>
-            <NavSectionTitle>メイン</NavSectionTitle>
-            <NavItem to="/dashboard" $isActive={isActive('/dashboard')}>
+      <SidebarNav>
+        <NavSection>
+          <NavSectionTitle>メイン</NavSectionTitle>
+          <NavItem to="/dashboard" $isActive={isActive('/dashboard')}>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+            </svg>
+            ダッシュボード
+          </NavItem>
+
+          {(isAdmin || isTeacher) && (
+            <NavItem to="/board" $isActive={isActive('/board')}>
               <svg
                 width="20"
                 height="20"
@@ -213,169 +313,171 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <rect x="3" y="3" width="7" height="7" />
-                <rect x="14" y="3" width="7" height="7" />
-                <rect x="14" y="14" width="7" height="7" />
-                <rect x="3" y="14" width="7" height="7" />
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
               </svg>
-              ダッシュボード
+              割当ボード
+            </NavItem>
+          )}
+
+          {(isAdmin || isTeacher) && (
+            <NavItem to="/calendar" $isActive={isActive('/calendar')}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+                <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+              </svg>
+              月次カレンダー
+            </NavItem>
+          )}
+        </NavSection>
+
+        {isAdmin && (
+          <NavSection>
+            <NavSectionTitle>マスタ管理</NavSectionTitle>
+            <NavItem to="/masters/teachers" $isActive={isActive('/masters/teachers')}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              講師マスタ
             </NavItem>
 
-            {(isAdmin || isTeacher) && (
-              <NavItem to="/board" $isActive={isActive('/board')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
-                割当ボード
-              </NavItem>
-            )}
-
-            {(isAdmin || isTeacher) && (
-              <NavItem to="/calendar" $isActive={isActive('/calendar')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
-                </svg>
-                月次カレンダー
-              </NavItem>
-            )}
+            <NavItem to="/masters/students" $isActive={isActive('/masters/students')}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              生徒マスタ
+            </NavItem>
           </NavSection>
+        )}
 
-          {isAdmin && (
-            <NavSection>
-              <NavSectionTitle>マスタ管理</NavSectionTitle>
-              <NavItem to="/masters/teachers" $isActive={isActive('/masters/teachers')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                講師マスタ
-              </NavItem>
+        {isAdmin && (
+          <NavSection>
+            <NavSectionTitle>システム</NavSectionTitle>
+            <NavItem to="/settings" $isActive={isActive('/settings')}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="3" />
+                <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 2.8l4.2 4.2M23 12h-6m-6 0H1m17.8-5.2l-4.2 4.2m0 2.8l4.2 4.2" />
+              </svg>
+              システム設定
+            </NavItem>
 
-              <NavItem to="/masters/students" $isActive={isActive('/masters/students')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                生徒マスタ
-              </NavItem>
-            </NavSection>
-          )}
+            <NavItem to="/audit-logs" $isActive={isActive('/audit-logs')}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+                <polyline points="10 9 9 9 8 9" />
+              </svg>
+              監査ログ
+            </NavItem>
+          </NavSection>
+        )}
+      </SidebarNav>
 
-          {isAdmin && (
-            <NavSection>
-              <NavSectionTitle>システム</NavSectionTitle>
-              <NavItem to="/settings" $isActive={isActive('/settings')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 2.8l4.2 4.2M23 12h-6m-6 0H1m17.8-5.2l-4.2 4.2m0 2.8l4.2 4.2" />
-                </svg>
-                システム設定
-              </NavItem>
+      <SidebarFooter>
+        <UserProfile>
+          <UserAvatar>{user?.email?.[0].toUpperCase() || 'U'}</UserAvatar>
+          <UserInfo>
+            <UserName>{user?.email || 'User'}</UserName>
+            <UserRole>{roleLabels[role || ''] || 'ユーザー'}</UserRole>
+          </UserInfo>
+        </UserProfile>
 
-              <NavItem to="/audit-logs" $isActive={isActive('/audit-logs')}>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-                監査ログ
-              </NavItem>
-            </NavSection>
-          )}
-        </SidebarNav>
+        <Button variant="ghost" size="sm" fullWidth onClick={handleLogout}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          ログアウト
+        </Button>
+      </SidebarFooter>
+    </>
+  )
 
-        <SidebarFooter>
-          <UserProfile>
-            <UserAvatar>{user?.email?.[0].toUpperCase() || 'U'}</UserAvatar>
-            <UserInfo>
-              <UserName>{user?.email || 'User'}</UserName>
-              <UserRole>{roleLabels[role || ''] || 'ユーザー'}</UserRole>
-            </UserInfo>
-          </UserProfile>
+  return (
+    <LayoutContainer>
+      <MobileHeader>
+        <Logo>
+          <LogoIcon>🎓</LogoIcon>
+          KomaFit
+        </Logo>
+        <HamburgerButton onClick={() => setIsMobileMenuOpen(true)}>
+          <span /><span /><span />
+        </HamburgerButton>
+      </MobileHeader>
 
-          <Button variant="ghost" size="sm" fullWidth onClick={handleLogout}>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            ログアウト
-          </Button>
-        </SidebarFooter>
+      <MobileOverlay $isOpen={isMobileMenuOpen} onClick={() => setIsMobileMenuOpen(false)} />
+      <MobileSidebar $isOpen={isMobileMenuOpen}>
+        {sidebarContent}
+      </MobileSidebar>
+
+      <Sidebar>
+        {sidebarContent}
       </Sidebar>
 
       <MainContent>{children}</MainContent>

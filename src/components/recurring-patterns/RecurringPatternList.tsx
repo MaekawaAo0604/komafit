@@ -116,13 +116,18 @@ const ErrorContainer = styled.div`
   font-size: 0.875rem;
 `
 
+const TableScrollWrapper = styled.div`
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+`
+
 const Table = styled.table`
   width: 100%;
+  min-width: 800px;
   border-collapse: collapse;
   background: white;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 `
 
 const TableHead = styled.thead`
@@ -620,6 +625,7 @@ export function RecurringPatternList({
       </FilterBar>
 
       {/* テーブル */}
+      <TableScrollWrapper>
       <Table>
         <TableHead>
           <TableRow>
@@ -691,6 +697,7 @@ export function RecurringPatternList({
           ))}
         </tbody>
       </Table>
+      </TableScrollWrapper>
 
       {/* 確認ダイアログ */}
       {confirmDialog?.isOpen && (

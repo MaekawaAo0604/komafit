@@ -37,6 +37,10 @@ const PageHeader = styled.div`
   background: white;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    padding: 0.75rem 1rem;
+  }
 `
 
 const HeaderRow = styled.div`
@@ -53,12 +57,17 @@ const PageTitle = styled.h1`
   font-weight: 700;
   color: #111827;
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
 `
 
 const WeekNav = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 `
 
 const NavButton = styled.button`
@@ -110,6 +119,11 @@ const WeekLabelButton = styled.button`
     background: #f3f4f6;
     border-color: #d1d5db;
   }
+
+  @media (max-width: 768px) {
+    min-width: 120px;
+    font-size: 0.8125rem;
+  }
 `
 
 const HiddenDateInput = styled.input`
@@ -136,6 +150,10 @@ const BoardWrapper = styled.div`
   flex: 1;
   overflow: hidden;
   padding: 1.5rem;
+
+  @media (max-width: 768px) {
+    padding: 0.5rem;
+  }
 `
 
 function formatWeekRange(monday: Date): string {

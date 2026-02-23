@@ -105,6 +105,10 @@ const DateMonth = styled.div`
 
 const Tr = styled.tr<{ $isEven?: boolean }>`
   background: ${props => props.$isEven ? '#f9fafb' : '#fff'};
+
+  &:not(:first-child) {
+    border-top: 4px solid #d1d5db;
+  }
 `
 
 const Td = styled.td<{ $isKoma?: boolean }>`
@@ -122,7 +126,7 @@ const KomaLabel = styled.div`
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 600px;
+  min-height: 200px;
 `
 
 const PositionsContainer = styled.div`
@@ -135,6 +139,7 @@ const PositionRow = styled.div<{ $isSelected?: boolean; $hasTeacher?: boolean }>
   border-bottom: 1px solid #e5e7eb;
   display: flex;
   align-items: stretch;
+  padding: 0.25rem 0;
   background: ${props => {
     if (props.$isSelected) return '#dbeafe'
     if (props.$hasTeacher) return '#fff'
