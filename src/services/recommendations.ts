@@ -211,9 +211,9 @@ function filterAndScoreTeachers(
 
   const candidates = teachers
     .filter((teacher) => {
-      // ハード制約1: 空き枠チェック
+      // ハード制約1: 空き枠チェック（レコードなし = 空いている）
       const availabilityRecord = availability.find((a) => a.teacher_id === teacher.id)
-      if (!availabilityRecord || !availabilityRecord.is_available) {
+      if (availabilityRecord && !availabilityRecord.is_available) {
         rejectionLog['no_availability'].push(teacher.name)
         return false
       }
