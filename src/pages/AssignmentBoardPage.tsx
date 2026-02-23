@@ -197,6 +197,9 @@ export const AssignmentBoardPage: React.FC = () => {
   const [selectedSeatDate, setSelectedSeatDate] = React.useState<string | null>(null)
   const [selectedSeatTeacherId, setSelectedSeatTeacherId] = React.useState<string | null>(null)
   const [currentAssignmentId, setCurrentAssignmentId] = React.useState<string | null>(null)
+  const [pendingSeatAfterTeacher, setPendingSeatAfterTeacher] = React.useState<{
+    slotId: string; position: number; seat: 1 | 2
+  } | null>(null)
 
   useEffect(() => {
     dispatch(fetchWeeklyScheduleAsync(weekStartDate))
@@ -250,6 +253,7 @@ export const AssignmentBoardPage: React.FC = () => {
     setShowTeacherModal(false)
     setSelectedSlot(null)
     setCurrentTeacherId(null)
+    setPendingSeatAfterTeacher(null)
   }
 
   const handleSelectTeacher = async (teacherId: string) => {
@@ -263,6 +267,26 @@ export const AssignmentBoardPage: React.FC = () => {
         assignedBy: user.id,
       })).unwrap()
 
+      // 講師選択後に生徒モーダルを続けて開く（座席クリック起点の場合）
+      if (pendingSeatAfterTeacher) {
+        const pending = pendingSeatAfterTeacher
+        const slotDay = pending.slotId.split('-')[0] ?? ''
+        const specificDate = new Date(weekStartDate)
+        specificDate.setDate(weekStartDate.getDate() + (dayOffsets[slotDay] ?? 0))
+        const dateStr = specificDate.toISOString().split('T')[0] ?? ''
+
+        setShowTeacherModal(false)
+        setSelectedSlot(null)
+        setCurrentTeacherId(null)
+        setPendingSeatAfterTeacher(null)
+
+        setSelectedSeat(pending)
+        setCurrentStudentId(null)
+        setCurrentAssignmentId(null)
+        setSelectedSeatDate(dateStr)
+        setSelectedSeatTeacherId(teacherId)
+        setShowStudentModal(true)
+      }
     } catch (error) {
       console.error('Failed to assign teacher:', error)
       alert('講師の割り当てに失敗しました')
@@ -278,6 +302,15 @@ export const AssignmentBoardPage: React.FC = () => {
     const studentId = student?.studentId || null
     const teacherData = positionData?.teacher
     const teacherId: string | null = teacherData ? (teacherData.teacherId ?? null) : null
+
+    // 講師未割当 → 先に講師選択モーダルを開き、選択後に生徒モーダルへ
+    if (!teacherId) {
+      setPendingSeatAfterTeacher({ slotId, position, seat })
+      setSelectedSlot({ slotId, position })
+      setCurrentTeacherId(null)
+      setShowTeacherModal(true)
+      return
+    }
 
     const slotDay = slotId.split('-')[0] ?? ''
     const specificDate = new Date(weekStartDate)
@@ -321,6 +354,7 @@ export const AssignmentBoardPage: React.FC = () => {
       return
     }
     if (!selectedSeatDate) return
+
 
     try {
       await dispatch(assignStudentV2Async({

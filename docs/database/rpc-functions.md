@@ -8,7 +8,8 @@ KomaFitシステムのデータベースRPC関数一覧
 2. [V2システム（日付ベース）](#v2システム日付ベース)
 3. [ユーザー管理](#ユーザー管理)
 4. [最適化関数](#最適化関数)
-5. [ヘルパー関数（双方向同期）](#ヘルパー関数双方向同期)
+5. [自動処理](#自動処理)
+6. [ヘルパー関数（双方向同期）](#ヘルパー関数双方向同期)
 
 ## レガシーシステム（曜日ベース）
 
@@ -921,6 +922,45 @@ const { data: exceptionId, error } = await supabase.rpc('create_assignment_excep
 - `VALIDATION_ERROR`: 日付がパターンの有効期間外
 - `DUPLICATE_EXCEPTION`: 同じ日付の例外が既に存在
 - `PERMISSION_DENIED`: 権限がない
+
+---
+
+## 自動処理
+
+### promote_student_grades
+
+**用途:** 全アクティブ生徒の学年を+1する（毎年3月1日に自動実行）
+
+**シグネチャ:**
+```sql
+promote_student_grades() RETURNS INT
+```
+
+**処理内容:**
+1. `active = TRUE` かつ `grade < 12` の全生徒の `grade` を +1
+2. `updated_at` を更新
+3. 高3（grade=12）の生徒はスキップ
+4. `audit_logs` に ACTION='PROMOTE_GRADES' として記録
+5. 更新された生徒数を返却
+
+**戻り値:**
+```sql
+INT -- 進級した生徒数
+```
+
+**自動実行:**
+- pg_cronにより毎年3月1日 00:00 UTC（= JST 09:00）に自動実行
+
+**手動実行:**
+```sql
+SELECT promote_student_grades();
+```
+
+**使用例:**
+```typescript
+const { data, error } = await supabase.rpc('promote_student_grades')
+// data = 15 (進級した生徒数)
+```
 
 ---
 
