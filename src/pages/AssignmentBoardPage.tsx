@@ -17,6 +17,7 @@ import {
   selectWeekStartDate,
   assignTeacherAsync,
   assignStudentV2Async,
+  unassignStudentV2Async,
 } from '@/store/scheduleSlice'
 import { selectUser } from '@/store/authSlice'
 import { AssignmentBoard } from '@/components/schedule/AssignmentBoard'
@@ -195,6 +196,7 @@ export const AssignmentBoardPage: React.FC = () => {
   const [currentStudentId, setCurrentStudentId] = React.useState<string | null>(null)
   const [selectedSeatDate, setSelectedSeatDate] = React.useState<string | null>(null)
   const [selectedSeatTeacherId, setSelectedSeatTeacherId] = React.useState<string | null>(null)
+  const [currentAssignmentId, setCurrentAssignmentId] = React.useState<string | null>(null)
 
   useEffect(() => {
     dispatch(fetchWeeklyScheduleAsync(weekStartDate))
@@ -284,6 +286,7 @@ export const AssignmentBoardPage: React.FC = () => {
 
     setSelectedSeat({ slotId, position, seat })
     setCurrentStudentId(studentId)
+    setCurrentAssignmentId(student?.assignmentId || null)
     setSelectedSeatDate(dateStr)
     setSelectedSeatTeacherId(teacherId)
     setShowStudentModal(true)
@@ -293,6 +296,7 @@ export const AssignmentBoardPage: React.FC = () => {
     setShowStudentModal(false)
     setSelectedSeat(null)
     setCurrentStudentId(null)
+    setCurrentAssignmentId(null)
     setSelectedSeatDate(null)
     setSelectedSeatTeacherId(null)
   }
@@ -332,6 +336,27 @@ export const AssignmentBoardPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to assign student:', error)
       alert('生徒の割り当てに失敗しました')
+    }
+  }
+
+  const handleRemoveStudent = async () => {
+    if (!currentAssignmentId) {
+      alert('削除対象のアサインが見つかりません')
+      return
+    }
+
+    if (!window.confirm('この割り当てを解除しますか？')) return
+
+    try {
+      await dispatch(unassignStudentV2Async({
+        assignmentId: currentAssignmentId,
+        weekStartDate,
+      })).unwrap()
+
+      handleCloseStudentModal()
+    } catch (error) {
+      console.error('Failed to unassign student:', error)
+      alert('割り当ての解除に失敗しました')
     }
   }
 
@@ -382,6 +407,7 @@ export const AssignmentBoardPage: React.FC = () => {
         isOpen={showStudentModal}
         onClose={handleCloseStudentModal}
         onSelect={handleSelectStudent}
+        onRemove={currentAssignmentId ? handleRemoveStudent : undefined}
         slotId={selectedSeat?.slotId || ''}
         currentStudentId={currentStudentId}
         date={selectedSeatDate ?? undefined}

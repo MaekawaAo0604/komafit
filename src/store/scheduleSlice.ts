@@ -10,6 +10,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
 import type { BoardSlot, DayOfWeek } from '@/types/entities'
 import * as slotsService from '@/services/slots'
 import { getWeeklyBoardData } from '@/services/calendar'
+import { unassignStudent } from '@/services/assignments'
 
 interface ScheduleState {
   slots: Record<string, BoardSlot> // key: slotId (e.g., "MON-0")
@@ -156,6 +157,21 @@ export const assignStudentV2Async = createAsyncThunk(
     weekStartDate: Date
   }) => {
     await slotsService.assignStudentV2(date, timeSlotId, teacherId, studentId, subject)
+    const slots = await getWeeklyBoardData(weekStartDate)
+    return { slots, weekStartDate: weekStartDate.toISOString() }
+  }
+)
+
+export const unassignStudentV2Async = createAsyncThunk(
+  'schedule/unassignStudentV2',
+  async ({
+    assignmentId,
+    weekStartDate,
+  }: {
+    assignmentId: string
+    weekStartDate: Date
+  }) => {
+    await unassignStudent(assignmentId)
     const slots = await getWeeklyBoardData(weekStartDate)
     return { slots, weekStartDate: weekStartDate.toISOString() }
   }
@@ -345,6 +361,26 @@ const scheduleSlice = createSlice({
       .addCase(assignStudentV2Async.rejected, (state, action) => {
         state.loading = false
         state.error = action.error.message || 'Failed to assign student v2'
+      })
+
+    // Unassign student V2
+    builder
+      .addCase(unassignStudentV2Async.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(unassignStudentV2Async.fulfilled, (state, action) => {
+        state.loading = false
+        state.slots = {}
+        action.payload.slots.forEach((slot) => {
+          state.slots[slot.id] = slot
+        })
+        state.weekStartDate = action.payload.weekStartDate
+        state.lastUpdated = new Date().toISOString()
+      })
+      .addCase(unassignStudentV2Async.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.error.message || 'Failed to unassign student'
       })
   },
 })

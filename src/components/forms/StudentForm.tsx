@@ -136,8 +136,8 @@ export const StudentForm: React.FC<StudentFormProps> = ({
     grade: student?.grade || 7,
     requiresOneOnOne: student?.requiresOneOnOne || false,
     lessonLabel: student?.lessonLabel || '',
-    subjects: student?.subjects || [],
-    ngTeachers: student?.ngTeachers || [],
+    subjects: student?.subjects?.map((s: any) => typeof s === 'string' ? s : s.subject) || [],
+    ngTeachers: student?.ngTeachers?.map((ng: any) => typeof ng === 'string' ? ng : ng.teacherId) || [],
   })
 
   const [newSubject, setNewSubject] = useState('')

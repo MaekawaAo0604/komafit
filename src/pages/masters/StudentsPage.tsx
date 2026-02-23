@@ -170,8 +170,15 @@ export const StudentsPage: React.FC = () => {
     setShowModal(true)
   }
 
-  const handleEdit = (student: Student) => {
-    setEditingStudent(student)
+  const handleEdit = async (student: Student) => {
+    // subjects と ngTeachers を事前取得してフォームに渡す
+    const subjects = await getStudentSubjects(student.id)
+    const ngTeachers = await getStudentNgTeachers(student.id)
+    setEditingStudent({
+      ...student,
+      subjects,
+      ngTeachers,
+    })
     setShowModal(true)
   }
 
@@ -206,7 +213,7 @@ export const StudentsPage: React.FC = () => {
         // Update subjects
         const currentSubjects = await getStudentSubjects(editingStudent.id)
         for (const subject of currentSubjects) {
-          await removeStudentSubject(editingStudent.id, subject)
+          await removeStudentSubject(editingStudent.id, subject.subject)
         }
         for (const subject of data.subjects) {
           await addStudentSubject(editingStudent.id, subject)
@@ -214,8 +221,8 @@ export const StudentsPage: React.FC = () => {
 
         // Update NG teachers
         const currentNgTeachers = await getStudentNgTeachers(editingStudent.id)
-        for (const teacherId of currentNgTeachers) {
-          await removeStudentNgTeacher(editingStudent.id, teacherId)
+        for (const ngTeacher of currentNgTeachers) {
+          await removeStudentNgTeacher(editingStudent.id, ngTeacher.teacherId)
         }
         for (const teacherId of data.ngTeachers) {
           await addStudentNgTeacher(editingStudent.id, teacherId)

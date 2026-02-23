@@ -13,6 +13,7 @@ interface StudentSelectModalProps {
   isOpen: boolean
   onClose: () => void
   onSelect: (studentId: string, subject: string, grade: number) => void
+  onRemove?: () => void
   slotId: string
   currentStudentId?: string | null
   // V2 対応用（指定時は assignments テーブルで重複チェック）
@@ -161,8 +162,31 @@ const Footer = styled.div`
   padding: 1rem 1.5rem;
   border-top: 1px solid #e5e7eb;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
+`
+
+const FooterRight = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`
+
+const RemoveButton = styled.button`
+  padding: 0.625rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #fca5a5;
+  background: white;
+  color: #dc2626;
+
+  &:hover {
+    background: #fef2f2;
+    border-color: #f87171;
+  }
 `
 
 const Button = styled.button<{ $variant?: 'primary' | 'secondary' }>`
@@ -204,6 +228,7 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
   isOpen,
   onClose,
   onSelect,
+  onRemove,
   slotId,
   currentStudentId,
   date,
@@ -357,16 +382,25 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
         </Content>
 
         <Footer>
-          <Button $variant="secondary" onClick={onClose}>
-            キャンセル
-          </Button>
-          <Button
-            $variant="primary"
-            onClick={handleSelect}
-            disabled={!selectedStudentId}
-          >
-            割り当て
-          </Button>
+          <div>
+            {currentStudentId && onRemove && (
+              <RemoveButton onClick={onRemove}>
+                割り当て解除
+              </RemoveButton>
+            )}
+          </div>
+          <FooterRight>
+            <Button $variant="secondary" onClick={onClose}>
+              キャンセル
+            </Button>
+            <Button
+              $variant="primary"
+              onClick={handleSelect}
+              disabled={!selectedStudentId}
+            >
+              割り当て
+            </Button>
+          </FooterRight>
         </Footer>
       </Modal>
     </Overlay>
