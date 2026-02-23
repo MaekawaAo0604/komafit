@@ -466,7 +466,7 @@ export const AssignmentBoard: React.FC<AssignmentBoardProps> = ({
                       {isAdmin && slot && (() => {
                         const allFilled = slot.positions.length > 0 &&
                           slot.positions.every(p => !!p.teacher?.teacherId)
-                        if (!allFilled || slot.positions.length >= 10) return null
+                        if (!allFilled) return null
                         return (
                           <AddPositionButton
                             onClick={() => onAddPosition?.(slot.id)}

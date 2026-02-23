@@ -222,7 +222,11 @@ export async function getWeeklyBoardData(weekStartDate: Date): Promise<BoardSlot
     specificDate.setDate(weekStartDate.getDate() + offset)
     const dateStr = specificDate.toISOString().split('T')[0]
 
-    const maxPositions = slot.komaCode === '0' || slot.komaCode === '1' ? 6 : 10
+    const defaultPositions = slot.komaCode === '0' || slot.komaCode === '1' ? 6 : 10
+    const actualMax = slotTeachers
+      ?.filter(st => st.slot_id === slot.id)
+      .reduce((max, st) => Math.max(max, st.position), 0) ?? 0
+    const maxPositions = Math.max(defaultPositions, actualMax)
     const positions: PositionData[] = []
 
     for (let pos = 1; pos <= maxPositions; pos++) {
