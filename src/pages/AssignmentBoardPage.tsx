@@ -197,8 +197,10 @@ export const AssignmentBoardPage: React.FC = () => {
   const [selectedSeatDate, setSelectedSeatDate] = React.useState<string | null>(null)
   const [selectedSeatTeacherId, setSelectedSeatTeacherId] = React.useState<string | null>(null)
   const [currentAssignmentId, setCurrentAssignmentId] = React.useState<string | null>(null)
-  const [pendingSeatAfterTeacher, setPendingSeatAfterTeacher] = React.useState<{
+  // 生徒選択後に講師が未割当だった場合の待機情報
+  const [pendingStudentAssign, setPendingStudentAssign] = React.useState<{
     slotId: string; position: number; seat: 1 | 2
+    date: string; studentId: string; subject: string
   } | null>(null)
 
   useEffect(() => {
@@ -253,7 +255,7 @@ export const AssignmentBoardPage: React.FC = () => {
     setShowTeacherModal(false)
     setSelectedSlot(null)
     setCurrentTeacherId(null)
-    setPendingSeatAfterTeacher(null)
+    setPendingStudentAssign(null)
   }
 
   const handleSelectTeacher = async (teacherId: string) => {
@@ -267,26 +269,26 @@ export const AssignmentBoardPage: React.FC = () => {
         assignedBy: user.id,
       })).unwrap()
 
-      // 講師選択後に生徒モーダルを続けて開く（座席クリック起点の場合）
-      if (pendingSeatAfterTeacher) {
-        const pending = pendingSeatAfterTeacher
-        const slotDay = pending.slotId.split('-')[0] ?? ''
-        const specificDate = new Date(weekStartDate)
-        specificDate.setDate(weekStartDate.getDate() + (dayOffsets[slotDay] ?? 0))
-        const dateStr = specificDate.toISOString().split('T')[0] ?? ''
+      // 生徒選択後に講師を選んだ場合 → 生徒アサインも実行
+      if (pendingStudentAssign) {
+        const pending = pendingStudentAssign
+        const timeSlotId = pending.slotId.split('-')[1] ?? ''
 
-        setShowTeacherModal(false)
-        setSelectedSlot(null)
-        setCurrentTeacherId(null)
-        setPendingSeatAfterTeacher(null)
+        await dispatch(assignStudentV2Async({
+          date: pending.date,
+          timeSlotId,
+          teacherId,
+          studentId: pending.studentId,
+          subject: pending.subject,
+          weekStartDate,
+        })).unwrap()
 
-        setSelectedSeat(pending)
-        setCurrentStudentId(null)
-        setCurrentAssignmentId(null)
-        setSelectedSeatDate(dateStr)
-        setSelectedSeatTeacherId(teacherId)
-        setShowStudentModal(true)
+        setPendingStudentAssign(null)
       }
+
+      setShowTeacherModal(false)
+      setSelectedSlot(null)
+      setCurrentTeacherId(null)
     } catch (error) {
       console.error('Failed to assign teacher:', error)
       alert('講師の割り当てに失敗しました')
@@ -302,15 +304,6 @@ export const AssignmentBoardPage: React.FC = () => {
     const studentId = student?.studentId || null
     const teacherData = positionData?.teacher
     const teacherId: string | null = teacherData ? (teacherData.teacherId ?? null) : null
-
-    // 講師未割当 → 先に講師選択モーダルを開き、選択後に生徒モーダルへ
-    if (!teacherId) {
-      setPendingSeatAfterTeacher({ slotId, position, seat })
-      setSelectedSlot({ slotId, position })
-      setCurrentTeacherId(null)
-      setShowTeacherModal(true)
-      return
-    }
 
     const slotDay = slotId.split('-')[0] ?? ''
     const specificDate = new Date(weekStartDate)
@@ -346,15 +339,26 @@ export const AssignmentBoardPage: React.FC = () => {
 
   const handleSelectStudent = async (studentId: string, subject: string, _grade: number) => {
     if (!selectedSeat || !user) return
+    if (!selectedSeatDate) return
 
     const timeSlotId = selectedSeat.slotId.split('-')[1] ?? ''
 
+    // 講師未割当 → 生徒情報を保持して講師選択モーダルへ
     if (!selectedSeatTeacherId) {
-      alert('先に講師を割り当ててください')
+      setPendingStudentAssign({
+        slotId: selectedSeat.slotId,
+        position: selectedSeat.position,
+        seat: selectedSeat.seat,
+        date: selectedSeatDate,
+        studentId,
+        subject,
+      })
+      handleCloseStudentModal()
+      setSelectedSlot({ slotId: selectedSeat.slotId, position: selectedSeat.position })
+      setCurrentTeacherId(null)
+      setShowTeacherModal(true)
       return
     }
-    if (!selectedSeatDate) return
-
 
     try {
       await dispatch(assignStudentV2Async({
