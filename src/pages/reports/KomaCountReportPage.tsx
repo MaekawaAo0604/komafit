@@ -201,7 +201,6 @@ export const KomaCountReportPage: React.FC = () => {
   const totalKoma = data.reduce((sum, r) => sum + r.komaCount, 0)
   const total1on1 = data.reduce((sum, r) => sum + r.koma1on1, 0)
   const total1on2 = data.reduce((sum, r) => sum + r.koma1on2, 0)
-  const totalStudents = data.reduce((sum, r) => sum + r.studentCount, 0)
 
   return (
     <PageContainer>
@@ -252,7 +251,6 @@ export const KomaCountReportPage: React.FC = () => {
                     <Th style={{ textAlign: 'right' }}>コマ数</Th>
                     <Th style={{ textAlign: 'right' }}>1:1</Th>
                     <Th style={{ textAlign: 'right' }}>1:2</Th>
-                    <Th style={{ textAlign: 'right' }}>延べ生徒数</Th>
                   </tr>
                 </Thead>
                 <Tbody>
@@ -267,9 +265,6 @@ export const KomaCountReportPage: React.FC = () => {
                       </Td>
                       <Td style={{ textAlign: 'right' }}>
                         {row.koma1on2}
-                      </Td>
-                      <Td style={{ textAlign: 'right', color: '#6b7280' }}>
-                        {row.studentCount}
                       </Td>
                     </Tr>
                   ))}
@@ -286,9 +281,6 @@ export const KomaCountReportPage: React.FC = () => {
                       </Td>
                       <Td style={{ textAlign: 'right', fontWeight: 700 }}>
                         {total1on2}
-                      </Td>
-                      <Td style={{ textAlign: 'right', fontWeight: 700, color: '#6b7280' }}>
-                        {totalStudents}
                       </Td>
                     </TfootRow>
                   </tfoot>
