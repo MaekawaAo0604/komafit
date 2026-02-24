@@ -10,6 +10,8 @@ export interface TeacherKomaCount {
   teacherId: string
   teacherName: string
   komaCount: number
+  koma1on1: number
+  koma1on2: number
   studentCount: number
 }
 
@@ -45,7 +47,7 @@ export async function getTeacherKomaCounts(
 
   const teacherMap = new Map<string, {
     name: string
-    komaSet: Set<string>
+    komaStudentCount: Map<string, number>
     totalRows: number
   }>()
 
@@ -54,21 +56,30 @@ export async function getTeacherKomaCounts(
     if (!teacherMap.has(tid)) {
       teacherMap.set(tid, {
         name: row.teachers?.name || '不明',
-        komaSet: new Set(),
+        komaStudentCount: new Map(),
         totalRows: 0,
       })
     }
     const entry = teacherMap.get(tid)!
-    entry.komaSet.add(`${row.date}-${row.time_slot_id}`)
+    const komaKey = `${row.date}-${row.time_slot_id}`
+    entry.komaStudentCount.set(komaKey, (entry.komaStudentCount.get(komaKey) || 0) + 1)
     entry.totalRows++
   }
 
   const results: TeacherKomaCount[] = []
   for (const [id, entry] of teacherMap) {
+    let koma1on1 = 0
+    let koma1on2 = 0
+    for (const count of entry.komaStudentCount.values()) {
+      if (count >= 2) koma1on2++
+      else koma1on1++
+    }
     results.push({
       teacherId: id,
       teacherName: entry.name,
-      komaCount: entry.komaSet.size,
+      komaCount: entry.komaStudentCount.size,
+      koma1on1,
+      koma1on2,
       studentCount: entry.totalRows,
     })
   }
