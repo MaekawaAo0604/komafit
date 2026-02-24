@@ -23,6 +23,7 @@ import { TeachersPage } from '@/pages/masters/TeachersPage'
 import { StudentsPage } from '@/pages/masters/StudentsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { AuditLogsPage } from '@/pages/AuditLogsPage'
+import { KomaCountReportPage } from '@/pages/reports/KomaCountReportPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 /**
@@ -180,6 +181,16 @@ export const router = createBrowserRouter([
           <ProtectedRoute requiredRole="admin">
             <DashboardLayout>
               <AuditLogsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'reports/koma-count',
+        element: (
+          <ProtectedRoute requiredRole="teacher">
+            <DashboardLayout>
+              <KomaCountReportPage />
             </DashboardLayout>
           </ProtectedRoute>
         ),
