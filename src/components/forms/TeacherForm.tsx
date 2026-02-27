@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { Teacher, TeacherSkill } from '@/types/entities'
 import { GRADE_OPTIONS, gradeToDisplay } from '@/utils/gradeHelper'
-import { SUBJECT_OPTIONS } from '@/utils/subjectOptions'
+import { SUBJECT_OPTIONS, getSubjectsForGrade } from '@/utils/subjectOptions'
 
 interface TeacherFormProps {
   teacher?: Teacher | null
@@ -200,7 +200,27 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
   const updateSkill = (index: number, field: keyof TeacherSkill, value: any) => {
     const newSkills = [...formData.skills]
     newSkills[index] = { ...newSkills[index], [field]: value }
+
+    // 教科を選んだら、その教科の学年範囲を自動設定
+    if (field === 'subject') {
+      const option = SUBJECT_OPTIONS.find(s => s.value === value)
+      if (option) {
+        newSkills[index].gradeMin = option.gradeMin ?? 1
+        newSkills[index].gradeMax = option.gradeMax ?? 12
+      }
+    }
+
     setFormData({ ...formData, skills: newSkills })
+  }
+
+  // スキルの学年範囲に合った教科リストを返す
+  const getSubjectsForSkill = (skill: TeacherSkill) => {
+    // 学年範囲内の全学年で有効な科目を集める
+    const subjects = new Set<string>()
+    for (let g = skill.gradeMin; g <= skill.gradeMax; g++) {
+      getSubjectsForGrade(g).forEach(s => subjects.add(s.value))
+    }
+    return SUBJECT_OPTIONS.filter(s => subjects.has(s.value))
   }
 
   const removeSkill = (index: number) => {
@@ -311,7 +331,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
                   onChange={(e) => updateSkill(index, 'subject', e.target.value)}
                 >
                   <option value="">選択してください</option>
-                  {SUBJECT_OPTIONS.map((subject) => (
+                  {getSubjectsForSkill(skill).map((subject) => (
                     <option key={subject.value} value={subject.value}>
                       {subject.label}
                     </option>
