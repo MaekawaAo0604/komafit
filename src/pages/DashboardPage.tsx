@@ -4,12 +4,13 @@
  * Main dashboard page showing overview and statistics.
  */
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { Card } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
 import { useAppSelector } from '@/store/hooks'
 import { selectUser, selectRole } from '@/store/authSlice'
+import { TutorialModal, isTutorialCompleted } from '@/components/tutorial/TutorialModal'
 
 const PageHeader = styled.div`
   margin-bottom: 2rem;
@@ -83,12 +84,26 @@ const roleLabels: Record<string, string> = {
 export const DashboardPage: React.FC = () => {
   const user = useAppSelector(selectUser)
   const role = useAppSelector(selectRole)
+  const [showTutorial, setShowTutorial] = useState(false)
+
+  useEffect(() => {
+    if (role && !isTutorialCompleted()) {
+      setShowTutorial(true)
+    }
+  }, [role])
 
   return (
     <div>
       <PageHeader>
-        <PageTitle>ダッシュボード</PageTitle>
-        <PageDescription>システムの概要と統計情報</PageDescription>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <PageTitle>ダッシュボード</PageTitle>
+            <PageDescription>システムの概要と統計情報</PageDescription>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowTutorial(true)}>
+            使い方ガイド
+          </Button>
+        </div>
       </PageHeader>
 
       <DebugInfo>
@@ -135,6 +150,12 @@ export const DashboardPage: React.FC = () => {
           </p>
         </Card.Content>
       </Card>
+
+      <TutorialModal
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        role={role}
+      />
     </div>
   )
 }
