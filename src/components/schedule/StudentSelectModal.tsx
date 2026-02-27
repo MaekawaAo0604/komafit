@@ -8,6 +8,7 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import type { Student } from '@/types/entities'
 import { supabase } from '@/lib/supabase'
+import { SUBJECT_OPTIONS, getSubjectsForGrade } from '@/utils/subjectOptions'
 
 interface StudentSelectModalProps {
   isOpen: boolean
@@ -21,8 +22,6 @@ interface StudentSelectModalProps {
   timeSlotId?: string
   teacherId?: string
 }
-
-const SUBJECTS = ['数学', '英語', '国語', '理科', '社会'] as const
 
 const Overlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -239,14 +238,14 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(currentStudentId || null)
-  const [selectedSubject, setSelectedSubject] = useState<string>(SUBJECTS[0])
+  const [selectedSubject, setSelectedSubject] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       fetchStudents()
       setSelectedStudentId(currentStudentId || null)
-      setSelectedSubject(SUBJECTS[0])
+      setSelectedSubject('')
     }
   }, [isOpen, currentStudentId, date, timeSlotId, teacherId])
 
@@ -318,8 +317,13 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
     }
   }
 
+  // 生徒切替時に科目をリセット
+  useEffect(() => {
+    setSelectedSubject('')
+  }, [selectedStudentId])
+
   const handleSelect = () => {
-    if (selectedStudentId) {
+    if (selectedStudentId && selectedSubject) {
       const student = students.find(s => s.id === selectedStudentId)
       if (student) {
         onSelect(selectedStudentId, selectedSubject, student.grade)
@@ -354,8 +358,12 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
             value={selectedSubject}
             onChange={(e) => setSelectedSubject(e.target.value)}
           >
-            {SUBJECTS.map(subject => (
-              <option key={subject} value={subject}>{subject}</option>
+            <option value="">科目を選択</option>
+            {(selectedStudentId
+              ? getSubjectsForGrade(students.find(s => s.id === selectedStudentId)?.grade ?? 7)
+              : SUBJECT_OPTIONS
+            ).map(subject => (
+              <option key={subject.value} value={subject.value}>{subject.label}</option>
             ))}
           </SubjectSelect>
 
@@ -396,7 +404,7 @@ export const StudentSelectModal: React.FC<StudentSelectModalProps> = ({
             <Button
               $variant="primary"
               onClick={handleSelect}
-              disabled={!selectedStudentId}
+              disabled={!selectedStudentId || !selectedSubject}
             >
               割り当て
             </Button>

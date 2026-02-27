@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { Student, Teacher } from '@/types/entities'
 import { GRADE_OPTIONS, gradeToDisplay, getSchoolLevel } from '@/utils/gradeHelper'
-import { SUBJECT_OPTIONS } from '@/utils/subjectOptions'
+import { getSubjectsForGrade, isSubjectValidForGrade } from '@/utils/subjectOptions'
 
 interface StudentFormProps {
   student?: Student | null
@@ -146,8 +146,17 @@ export const StudentForm: React.FC<StudentFormProps> = ({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 全ての科目を表示（学年による絞り込みは講師のスキル設定で対応）
-  const availableSubjects = SUBJECT_OPTIONS
+  const availableSubjects = getSubjectsForGrade(formData.grade)
+
+  // 学年変更時に無効な科目を自動除去
+  useEffect(() => {
+    const validSubjects = formData.subjects.filter(
+      subject => isSubjectValidForGrade(subject, formData.grade)
+    )
+    if (validSubjects.length !== formData.subjects.length) {
+      setFormData(prev => ({ ...prev, subjects: validSubjects }))
+    }
+  }, [formData.grade])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

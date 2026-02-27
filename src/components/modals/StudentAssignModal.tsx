@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { listStudents } from '@/services/students'
 import { assignStudent } from '@/services/assignments'
 import { gradeToDisplay } from '@/utils/gradeHelper'
-import { SUBJECT_OPTIONS } from '@/utils/subjectOptions'
+import { SUBJECT_OPTIONS, getSubjectsForGrade, isSubjectValidForGrade } from '@/utils/subjectOptions'
 import type { Student } from '@/types/entities'
 
 interface StudentAssignModalProps {
@@ -190,6 +190,19 @@ export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
 
   const selectedStudent = students.find((s) => s.id === selectedStudentId)
 
+  // 生徒切替時に無効な科目をリセット
+  useEffect(() => {
+    if (selectedStudent && selectedSubject && selectedSubject !== 'custom') {
+      if (!isSubjectValidForGrade(selectedSubject, selectedStudent.grade)) {
+        setSelectedSubject('')
+      }
+    }
+  }, [selectedStudentId])
+
+  const subjectOptions = selectedStudent
+    ? getSubjectsForGrade(selectedStudent.grade)
+    : SUBJECT_OPTIONS
+
   // Format date for display
   const dateObj = new Date(date + 'T00:00:00')
   const dateDisplay = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月${dateObj.getDate()}日`
@@ -253,7 +266,7 @@ export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
             required
           >
             <option value="">科目を選択してください</option>
-            {SUBJECT_OPTIONS.map((subject) => (
+            {subjectOptions.map((subject) => (
               <option key={subject.value} value={subject.value}>
                 {subject.label}
               </option>
