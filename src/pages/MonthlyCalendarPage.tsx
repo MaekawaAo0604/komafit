@@ -223,10 +223,10 @@ const DataCell = styled.div<{
   $hasAssignment?: boolean
   $dataSource?: 'pattern' | 'assignment' | 'exception' | null
 }>`
-  padding: 0.4rem;
+  padding: 0.5rem;
   border-right: 1px solid #e5e7eb;
   border-bottom: 1px solid #e5e7eb;
-  min-height: 70px;
+  min-height: 100px;
   position: relative;
   background: ${(props) => {
     // dataSourceに基づく色分け
@@ -252,8 +252,8 @@ const DataCell = styled.div<{
   }
 
   @media (min-width: 1024px) {
-    padding: 0.5rem;
-    min-height: 80px;
+    padding: 0.75rem;
+    min-height: 120px;
   }
 `
 

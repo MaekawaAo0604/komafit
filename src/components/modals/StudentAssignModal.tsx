@@ -10,7 +10,8 @@ import styled from 'styled-components'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { listStudents } from '@/services/students'
-import { assignStudent } from '@/services/assignments'
+import { assignStudent, unassignStudent } from '@/services/assignments'
+import { supabase } from '@/lib/supabase'
 import { gradeToDisplay } from '@/utils/gradeHelper'
 import { SUBJECT_OPTIONS, getSubjectsForGrade, isSubjectValidForGrade } from '@/utils/subjectOptions'
 import type { Student } from '@/types/entities'
@@ -117,6 +118,27 @@ const StudentDetail = styled.div`
   }
 `
 
+const ExistingAssignments = styled.div`
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1.5rem;
+`
+
+const ExistingAssignmentItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+`
+
+const AssignmentText = styled.span`
+  color: #374151;
+`
+
 export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
   isOpen,
   onClose,
@@ -126,15 +148,18 @@ export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
   onSuccess,
 }) => {
   const [students, setStudents] = useState<Student[]>([])
+  const [existingAssignments, setExistingAssignments] = useState<{ id: string; studentName: string; subject: string }[]>([])
   const [selectedStudentId, setSelectedStudentId] = useState<string>('')
   const [selectedSubject, setSelectedSubject] = useState<string>('')
   const [customSubject, setCustomSubject] = useState<string>('')
   const [loading, setLoading] = useState(false)
+  const [unassigning, setUnassigning] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
       loadStudents()
+      loadExistingAssignments()
       // Reset form
       setSelectedStudentId('')
       setSelectedSubject('')
@@ -152,6 +177,35 @@ export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
       setError(err instanceof Error ? err.message : '生徒リストの取得に失敗しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadExistingAssignments = async () => {
+    const { data } = await supabase
+      .from('assignments')
+      .select('id, subject, students(name)')
+      .eq('date', date)
+      .eq('time_slot_id', timeSlotId)
+      .eq('teacher_id', teacherId)
+    setExistingAssignments(
+      (data ?? []).map((a: any) => ({
+        id: a.id,
+        studentName: a.students?.name ?? '不明',
+        subject: a.subject ?? '',
+      }))
+    )
+  }
+
+  const handleUnassign = async (assignmentId: string) => {
+    try {
+      setUnassigning(assignmentId)
+      await unassignStudent(assignmentId)
+      await loadExistingAssignments()
+      onSuccess?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'アサイン解除に失敗しました')
+    } finally {
+      setUnassigning(null)
     }
   }
 
@@ -212,12 +266,32 @@ export const StudentAssignModal: React.FC<StudentAssignModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="生徒アサイン"
-      size="sm"
+      size="md"
     >
       <form onSubmit={handleSubmit}>
         <InfoText>
           <strong>日付:</strong> {dateDisplay}　<strong>コマ:</strong> {timeSlotId}
         </InfoText>
+
+        {existingAssignments.length > 0 && (
+          <ExistingAssignments>
+            <Label>アサイン済み</Label>
+            {existingAssignments.map((a) => (
+              <ExistingAssignmentItem key={a.id}>
+                <AssignmentText>{a.studentName} - {a.subject}</AssignmentText>
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleUnassign(a.id)}
+                  disabled={unassigning === a.id}
+                >
+                  {unassigning === a.id ? '解除中...' : '解除'}
+                </Button>
+              </ExistingAssignmentItem>
+            ))}
+          </ExistingAssignments>
+        )}
 
         <FormGroup>
           <Label htmlFor="student">生徒 *</Label>
