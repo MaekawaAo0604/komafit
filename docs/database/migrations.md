@@ -311,6 +311,7 @@ dow_to_day(p_dow INTEGER) RETURNS VARCHAR(3)  -- 1→MON, 0→SUN
 | ファイル名 | 実行順 | 内容 | 関連要件 |
 |-----------|-------|------|---------|
 | `20260227000001_fix_create_teacher_user_auth.sql` | 39 | create_teacher_user Auth連携 + パスワード再発行RPC | AUTH-1 |
+| `20260227000002_update_teacher_email_auth.sql` | 40 | メールアドレス更新のAuth連携RPC | AUTH-2 |
 
 ### 自動処理（pg_cron）
 

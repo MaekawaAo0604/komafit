@@ -534,6 +534,46 @@ const { error } = await supabase.rpc('reset_teacher_password', {
 
 ---
 
+### update_teacher_email
+
+**用途:** 講師のメールアドレスを更新する
+
+**シグネチャ:**
+```sql
+update_teacher_email(
+    p_user_id UUID,
+    p_new_email TEXT
+) RETURNS BOOLEAN
+```
+
+**パラメータ:**
+- `p_user_id`: ユーザーID（public.users.id = auth.users.id）
+- `p_new_email`: 新しいメールアドレス
+
+**処理内容:**
+1. `auth.users`の`email`を更新
+2. `auth.identities`の`identity_data.email`を更新
+3. `public.users`の`email`を更新
+4. ユーザーが`auth.users`に存在しない場合はエラー
+
+**戻り値:**
+```sql
+BOOLEAN (成功: true)
+```
+
+**使用例:**
+```typescript
+const { error } = await supabase.rpc('update_teacher_email', {
+  p_user_id: 'user-uuid',
+  p_new_email: 'new-email@example.com',
+})
+```
+
+**エラー条件:**
+- `auth.users`にユーザーが存在しない
+
+---
+
 ## 最適化関数
 
 ### batch_set_teacher_availability

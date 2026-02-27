@@ -137,12 +137,13 @@ export async function updateTeacher(
 
 /**
  * Update user email for a teacher's linked user account
+ * Updates auth.users, auth.identities, and public.users via RPC
  */
 export async function updateTeacherEmail(userId: string, email: string) {
-  const { error } = await supabase
-    .from('users')
-    .update({ email })
-    .eq('id', userId)
+  const { error } = await supabase.rpc('update_teacher_email', {
+    p_user_id: userId,
+    p_new_email: email,
+  })
 
   if (error) {
     throw new Error(`メールアドレスの更新に失敗しました: ${error.message}`)
