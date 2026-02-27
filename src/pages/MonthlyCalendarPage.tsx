@@ -835,7 +835,7 @@ export const MonthlyCalendarPage: React.FC = () => {
     dataByDateAndSlot.get(key)!.push(item)
   })
 
-  if (loading) {
+  if (loading && calendarData.length === 0) {
     return (
       <PageContainer>
         <LoadingText>読み込み中...</LoadingText>
