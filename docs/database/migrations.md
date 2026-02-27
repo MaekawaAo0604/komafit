@@ -88,6 +88,12 @@ npm run supabase:migrate
 |-----------|-------|------|---------|
 | `20260216000000_fix_assign_student_v2_position.sql` | 30 | position自動計算化 | BUG-1 |
 | `20260216000001_fix_calendar_multiple_students.sql` | 31 | カレンダー複数生徒対応 | BUG-2 |
+| `20260222000001_add_slot_position_rpc.sql` | 33 | スロットposition追加RPC | BUG-3 |
+| `20260222000002_fix_assign_student_v2_pair.sql` | 34 | assign_student_v2 ペア対応修正 | BUG-4 |
+| `20260222000003_fix_assign_student_actor_id.sql` | 35 | assign_student actor_id修正 | BUG-5 |
+| `20260228000001_fix_recurring_rpc_audit_logs.sql` | 36 | 定期パターンRPC audit_logsカラム修正 | BUG-6 |
+| `20260228000002_fix_list_recurring_assignments_ambiguous.sql` | 37 | list_recurring_assignments 曖昧カラム修正 | BUG-7 |
+| `20260228000003_add_board_sync_to_recurring.sql` | 38 | 定期パターン作成時にassignments+slot_teacherへ同期 | SYNC-2 |
 
 ### 双方向同期
 

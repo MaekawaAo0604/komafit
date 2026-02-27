@@ -712,7 +712,17 @@ create_recurring_assignment(
 1. 入力バリデーション（講師・生徒の存在確認、曜日範囲チェック）
 2. 重複チェック（同じ条件のパターンが既に存在しないか）
 3. `recurring_assignments`テーブルにINSERT
-4. 作成したパターンのIDを返却
+4. `audit_logs`に記録
+5. **【同期1】** `slot_teacher`に講師を配置（空きpositionにUPDATE）
+6. **【同期2】** `assignments`テーブルに次の該当曜日のレコードを作成（ボードUI表示用）
+7. **【同期2】** `teacher_availability_v2`を自動作成（未存在の場合）
+8. 作成したパターンを返却
+
+**同期条件（スキップケース）:**
+- `slots`テーブルに該当スロットが存在しない場合（講師同期スキップ）
+- `assignments`に同じ組み合わせが既に存在する場合（重複回避）
+- 座席(position)が2つとも埋まっている場合
+- `v_target_date`が`end_date`を超えている場合
 
 **戻り値:**
 ```sql
@@ -1053,6 +1063,7 @@ dow_to_day(p_dow INTEGER) RETURNS VARCHAR(3)
 | ボードで生徒解除 | `unassign_student` | → `recurring_assignments` を `active=FALSE` |
 | カレンダーで生徒アサイン | `assign_student_v2` | → `slot_students` にレコード作成 |
 | カレンダーで生徒解除 | `unassign_student_v2` | → `slot_students` からレコード削除 |
+| 定期パターン作成 | `create_recurring_assignment` | → `slot_teacher` に講師配置 + `assignments` にレコード作成 |
 
 **設計方針:**
 - トリガーではなくRPC関数内のSQL直接操作（循環更新のリスク回避）
