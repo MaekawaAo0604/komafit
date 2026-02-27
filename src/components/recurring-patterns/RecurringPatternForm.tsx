@@ -5,13 +5,14 @@
  * Allows teachers to register weekly lesson patterns that automatically expand to calendars.
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import styled from 'styled-components'
 import { Button } from '@/components/ui/Button'
 import { gradeToDisplay } from '@/utils/gradeHelper'
+import { getSubjectsForGrade, isSubjectValidForGrade, SUBJECT_OPTIONS } from '@/utils/subjectOptions'
 import { Input } from '@/components/ui/Input'
 import type {
   RecurringAssignment,
@@ -235,6 +236,8 @@ export function RecurringPatternForm({
   const [studentSearch, setStudentSearch] = useState('')
   const [showStudentList, setShowStudentList] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isCustomSubject, setIsCustomSubject] = useState(false)
+  const [customSubject, setCustomSubject] = useState('')
 
   // React Hook Form setup with Zod resolver
   const {
@@ -271,6 +274,22 @@ export function RecurringPatternForm({
 
   const selectedStudentId = watch('studentId')
   const selectedStudent = students.find((s) => s.id === selectedStudentId)
+
+  // 学年に応じた科目リスト
+  const subjectOptions = selectedStudent
+    ? getSubjectsForGrade(selectedStudent.grade)
+    : SUBJECT_OPTIONS
+
+  // 生徒切替時に無効な科目をリセット
+  useEffect(() => {
+    if (!selectedStudent) return
+    const currentSubject = watch('subject')
+    if (currentSubject && !isCustomSubject) {
+      if (!isSubjectValidForGrade(currentSubject, selectedStudent.grade)) {
+        setValue('subject', '')
+      }
+    }
+  }, [selectedStudentId])
 
   // Filter students by search term
   const filteredStudents = students.filter((student) =>
@@ -441,26 +460,40 @@ export function RecurringPatternForm({
         {/* 科目選択 */}
         <FormGroup>
           <Label htmlFor="subject">科目 *</Label>
-          <Description>
-            {selectedStudent?.subjects && selectedStudent.subjects.length > 0
-              ? '生徒の受講科目から選択してください'
-              : '授業の科目を入力してください'}
-          </Description>
-          {selectedStudent?.subjects && selectedStudent.subjects.length > 0 ? (
-            <Select {...register('subject')} disabled={isSubmitting}>
-              <option value="">選択してください</option>
-              {selectedStudent.subjects.map((sub) => (
-                <option key={sub.subject} value={sub.subject}>
-                  {sub.subject}
-                </option>
-              ))}
-            </Select>
-          ) : (
+          <Description>授業の科目を選択してください</Description>
+          <Select
+            value={isCustomSubject ? 'custom' : watch('subject')}
+            onChange={(e) => {
+              if (e.target.value === 'custom') {
+                setIsCustomSubject(true)
+                setValue('subject', customSubject || '')
+              } else {
+                setIsCustomSubject(false)
+                setCustomSubject('')
+                setValue('subject', e.target.value)
+              }
+            }}
+            disabled={isSubmitting}
+          >
+            <option value="">選択してください</option>
+            {subjectOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+            <option value="custom">その他（手入力）</option>
+          </Select>
+          {isCustomSubject && (
             <Input
               type="text"
-              {...register('subject')}
-              placeholder="例: 数学"
+              placeholder="科目名を入力してください"
+              value={customSubject}
+              onChange={(e) => {
+                setCustomSubject(e.target.value)
+                setValue('subject', e.target.value.trim())
+              }}
               disabled={isSubmitting}
+              style={{ marginTop: '0.5rem' }}
             />
           )}
           {errors.subject && <ErrorText>{errors.subject.message}</ErrorText>}
