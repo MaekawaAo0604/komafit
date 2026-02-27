@@ -135,7 +135,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
     email: teacher?.user?.email || '',
     createUserAccount: false,
     capWeekSlots: teacher?.capWeekSlots || 10,
-    capStudents: teacher?.capStudents || 4,
+    capStudents: teacher?.capStudents || 2,
     allowPair: teacher?.allowPair || false,
     skills: teacher?.skills || [],
   })
