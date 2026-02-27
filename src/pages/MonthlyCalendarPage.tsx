@@ -5,7 +5,7 @@
  * and student assignments in a monthly view.
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import styled from 'styled-components'
 import { Button } from '@/components/ui/Button'
 import { StudentAssignModal } from '@/components/modals/StudentAssignModal'
@@ -400,6 +400,8 @@ export const MonthlyCalendarPage: React.FC = () => {
   const isAdmin = useAppSelector(selectIsAdmin)
   const role = useAppSelector(selectRole)
 
+  const calendarRef = useRef<HTMLDivElement>(null)
+
   const [currentDate, setCurrentDate] = useState(new Date())
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])
@@ -492,6 +494,10 @@ export const MonthlyCalendarPage: React.FC = () => {
   const loadCalendarData = async () => {
     if (!selectedTeacherId) return
 
+    // スクロール位置を保存
+    const scrollLeft = calendarRef.current?.scrollLeft ?? 0
+    const scrollTop = calendarRef.current?.scrollTop ?? 0
+
     try {
       setLoading(true)
       setError(null)
@@ -513,6 +519,13 @@ export const MonthlyCalendarPage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'データの取得に失敗しました')
     } finally {
       setLoading(false)
+      // スクロール位置を復元
+      requestAnimationFrame(() => {
+        if (calendarRef.current) {
+          calendarRef.current.scrollLeft = scrollLeft
+          calendarRef.current.scrollTop = scrollTop
+        }
+      })
     }
   }
 
@@ -965,7 +978,7 @@ export const MonthlyCalendarPage: React.FC = () => {
         </HeaderControls>
       </PageHeader>
 
-      <CalendarContainer>
+      <CalendarContainer ref={calendarRef}>
         <CalendarGrid style={{ gridTemplateColumns: `120px repeat(${daysInMonth}, 180px)` }}>
           {/* Header row */}
           <HeaderCell $sticky>コマ / 日付</HeaderCell>
