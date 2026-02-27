@@ -23,6 +23,7 @@ export interface TeacherFormData {
   name: string
   email?: string
   createUserAccount?: boolean
+  regeneratePassword?: boolean
   capWeekSlots: number
   capStudents: number
   allowPair: boolean
@@ -253,7 +254,7 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
           />
         </FormGroup>
 
-        {!teacher?.userId && (
+        {!teacher?.userId ? (
           <CheckboxGroup>
             <CheckboxLabel>
               <input
@@ -267,6 +268,21 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
               ユーザーアカウントを作成（ログイン可能にする）
             </CheckboxLabel>
           </CheckboxGroup>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (window.confirm('パスワードを再発行しますか？')) {
+                setFormData({ ...formData, regeneratePassword: true })
+                // submit the form programmatically
+                document.querySelector<HTMLFormElement>('form')?.requestSubmit()
+              }
+            }}
+          >
+            パスワード再発行
+          </Button>
         )}
 
         <FormGroup>

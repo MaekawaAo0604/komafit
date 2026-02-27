@@ -292,6 +292,18 @@ export const TeachersPage: React.FC = () => {
           }
         }
 
+        // パスワード再発行
+        if (data.regeneratePassword && editingTeacher.userId) {
+          const { generatePassword } = await import('@/utils/passwordGenerator')
+          const newPassword = generatePassword(12)
+          setGeneratedCredentials({
+            email: data.email || editingTeacher.user?.email || '',
+            password: newPassword,
+            name: data.name,
+          })
+          setShowPasswordModal(true)
+        }
+
         // Update skills
         const currentSkills = await getTeacherSkills(editingTeacher.id)
 
