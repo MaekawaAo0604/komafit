@@ -21,7 +21,7 @@ import {
   removeTeacherSkill,
   getTeacherSkills,
 } from '@/services/teachers'
-import { createTeacherUser } from '@/services/auth'
+import { createTeacherUser, resetTeacherPassword } from '@/services/auth'
 import { gradeToDisplay } from '@/utils/gradeHelper'
 import type { Teacher } from '@/types/entities'
 
@@ -296,6 +296,7 @@ export const TeachersPage: React.FC = () => {
         if (data.regeneratePassword && editingTeacher.userId) {
           const { generatePassword } = await import('@/utils/passwordGenerator')
           const newPassword = generatePassword(12)
+          await resetTeacherPassword(editingTeacher.userId, newPassword)
           setGeneratedCredentials({
             email: data.email || editingTeacher.user?.email || '',
             password: newPassword,

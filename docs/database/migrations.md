@@ -306,6 +306,12 @@ dow_to_day(p_dow INTEGER) RETURNS VARCHAR(3)  -- 1→MON, 0→SUN
 - 該当スロットが存在しない場合、同期はスキップ
 - 座席が満席の場合、同期はスキップ
 
+### Auth連携
+
+| ファイル名 | 実行順 | 内容 | 関連要件 |
+|-----------|-------|------|---------|
+| `20260227000001_fix_create_teacher_user_auth.sql` | 39 | create_teacher_user Auth連携 + パスワード再発行RPC | AUTH-1 |
+
 ### 自動処理（pg_cron）
 
 | ファイル名 | 実行順 | 内容 | 関連要件 |

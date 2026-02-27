@@ -456,60 +456,32 @@ const { data, error } = await supabase.rpc('get_monthly_calendar', {
 
 ### create_teacher_user
 
-**用途:** 講師ユーザーを作成する（users + teachers + teacher_skills）
+**用途:** 講師ユーザーを作成する（public.users + auth.users + auth.identities）
 
 **シグネチャ:**
 ```sql
 create_teacher_user(
-    p_email VARCHAR(255),
-    p_name VARCHAR(255),
-    p_password VARCHAR(255),
-    p_teacher_data JSONB
-) RETURNS JSONB
+    p_email TEXT,
+    p_name TEXT,
+    p_password TEXT DEFAULT NULL
+) RETURNS UUID
 ```
 
 **パラメータ:**
 - `p_email`: メールアドレス
 - `p_name`: 名前
-- `p_password`: パスワード（ハッシュ化される）
-- `p_teacher_data`: 講師データ（JSON形式）
-
-**p_teacher_dataの構造:**
-```json
-{
-  "cap_week_slots": 10,
-  "cap_students": 5,
-  "allow_pair": true,
-  "skills": [
-    {
-      "subject": "数学",
-      "grade_min": 1,
-      "grade_max": 6
-    },
-    {
-      "subject": "英語",
-      "grade_min": 3,
-      "grade_max": 6
-    }
-  ]
-}
-```
+- `p_password`: パスワード（NULLの場合、auth.usersへの登録はスキップ）
 
 **処理内容:**
-1. `users`テーブルにユーザー作成（role='teacher'）
-2. パスワードをbcryptでハッシュ化
-3. `teachers`テーブルに講師データ作成（user_idを設定）
-4. `teacher_skills`に各教科・学年範囲を登録
-5. トランザクション内で一貫性保証
+1. `public.users`テーブルにユーザー作成（role='teacher'）
+2. `p_password`が指定されている場合:
+   - `auth.users`にレコード作成（bcryptでパスワードハッシュ化、email確認済み）
+   - `auth.identities`にemailプロバイダのレコード作成
+3. 作成された`public.users.id`を返却（= `auth.users.id`と同一）
 
 **戻り値:**
-```json
-{
-  "user_id": "UUID",
-  "teacher_id": "UUID",
-  "email": "teacher@example.com",
-  "name": "講師名"
-}
+```sql
+UUID -- 作成されたユーザーID
 ```
 
 **使用例:**
@@ -518,17 +490,47 @@ const { data, error } = await supabase.rpc('create_teacher_user', {
   p_email: 'teacher@example.com',
   p_name: '山田太郎',
   p_password: 'SecurePassword123',
-  p_teacher_data: {
-    cap_week_slots: 10,
-    cap_students: 5,
-    allow_pair: true,
-    skills: [
-      { subject: '数学', grade_min: 1, grade_max: 6 },
-      { subject: '英語', grade_min: 3, grade_max: 6 }
-    ]
-  }
 })
 ```
+
+---
+
+### reset_teacher_password
+
+**用途:** 講師のパスワードを再発行する
+
+**シグネチャ:**
+```sql
+reset_teacher_password(
+    p_user_id UUID,
+    p_new_password TEXT
+) RETURNS BOOLEAN
+```
+
+**パラメータ:**
+- `p_user_id`: ユーザーID（public.users.id = auth.users.id）
+- `p_new_password`: 新しいパスワード（平文、DB側でbcryptハッシュ化）
+
+**処理内容:**
+1. `auth.users`の`encrypted_password`を更新
+2. `public.users`の`password_hash`を更新
+3. ユーザーが`auth.users`に存在しない場合はエラー
+
+**戻り値:**
+```sql
+BOOLEAN (成功: true)
+```
+
+**使用例:**
+```typescript
+const { error } = await supabase.rpc('reset_teacher_password', {
+  p_user_id: 'user-uuid',
+  p_new_password: 'NewSecurePassword456',
+})
+```
+
+**エラー条件:**
+- `auth.users`にユーザーが存在しない
 
 ---
 

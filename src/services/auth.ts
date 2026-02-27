@@ -182,6 +182,29 @@ export async function isViewer(): Promise<boolean> {
  * @returns Object with userId and generated password
  * @throws Error if user creation fails
  */
+/**
+ * Reset a teacher's password via RPC
+ *
+ * Updates the password in both auth.users and public.users.
+ *
+ * @param userId - User ID (public.users.id = auth.users.id)
+ * @param newPassword - New password (plain text, hashed on DB side)
+ * @throws Error if password reset fails
+ */
+export async function resetTeacherPassword(
+  userId: string,
+  newPassword: string
+): Promise<void> {
+  const { error } = await supabase.rpc('reset_teacher_password', {
+    p_user_id: userId,
+    p_new_password: newPassword,
+  })
+
+  if (error) {
+    throw new Error(`パスワードの再発行に失敗しました: ${error.message}`)
+  }
+}
+
 export async function createTeacherUser(
   email: string,
   name: string
