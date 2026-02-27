@@ -15,6 +15,7 @@ import {
   listTeachers,
   createTeacher,
   updateTeacher,
+  updateTeacherEmail,
   deleteTeacher,
   addTeacherSkill,
   removeTeacherSkill,
@@ -266,6 +267,30 @@ export const TeachersPage: React.FC = () => {
           capStudents: data.capStudents,
           allowPair: data.allowPair,
         })
+
+        // Handle email / user account
+        if (data.email?.trim()) {
+          if (editingTeacher.userId) {
+            // 既存アカウントのメアド更新
+            await updateTeacherEmail(editingTeacher.userId, data.email.trim())
+          } else if (data.createUserAccount) {
+            // 新規アカウント作成
+            try {
+              const result = await createTeacherUser(data.email, data.name)
+              await updateTeacher(editingTeacher.id, { userId: result.userId })
+              setGeneratedCredentials({
+                email: data.email,
+                password: result.password,
+                name: data.name,
+              })
+              setShowPasswordModal(true)
+            } catch (err) {
+              throw new Error(
+                `ユーザーアカウントの作成に失敗しました: ${err instanceof Error ? err.message : '不明なエラー'}`
+              )
+            }
+          }
+        }
 
         // Update skills
         const currentSkills = await getTeacherSkills(editingTeacher.id)

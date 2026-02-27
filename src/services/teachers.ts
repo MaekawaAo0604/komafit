@@ -136,6 +136,20 @@ export async function updateTeacher(
 }
 
 /**
+ * Update user email for a teacher's linked user account
+ */
+export async function updateTeacherEmail(userId: string, email: string) {
+  const { error } = await supabase
+    .from('users')
+    .update({ email })
+    .eq('id', userId)
+
+  if (error) {
+    throw new Error(`メールアドレスの更新に失敗しました: ${error.message}`)
+  }
+}
+
+/**
  * List all teachers
  *
  * @param activeOnly - Filter by active teachers only

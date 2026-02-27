@@ -242,33 +242,31 @@ export const TeacherForm: React.FC<TeacherFormProps> = ({
           />
         </FormGroup>
 
-        {!teacher && (
-          <>
-            <FormGroup>
-              <Label htmlFor="email">メールアドレス（オプション）</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="例: teacher@example.com"
-              />
-            </FormGroup>
+        <FormGroup>
+          <Label htmlFor="email">メールアドレス（オプション）</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="例: teacher@example.com"
+          />
+        </FormGroup>
 
-            <CheckboxGroup>
-              <CheckboxLabel>
-                <input
-                  type="checkbox"
-                  checked={formData.createUserAccount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, createUserAccount: e.target.checked })
-                  }
-                  disabled={!formData.email?.trim()}
-                />
-                ユーザーアカウントを作成（ログイン可能にする）
-              </CheckboxLabel>
-            </CheckboxGroup>
-          </>
+        {!teacher?.userId && (
+          <CheckboxGroup>
+            <CheckboxLabel>
+              <input
+                type="checkbox"
+                checked={formData.createUserAccount}
+                onChange={(e) =>
+                  setFormData({ ...formData, createUserAccount: e.target.checked })
+                }
+                disabled={!formData.email?.trim()}
+              />
+              ユーザーアカウントを作成（ログイン可能にする）
+            </CheckboxLabel>
+          </CheckboxGroup>
         )}
 
         <FormGroup>
