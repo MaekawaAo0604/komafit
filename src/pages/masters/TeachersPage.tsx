@@ -116,6 +116,23 @@ const SkillTag = styled.span`
   font-weight: 600;
 `
 
+const SkillsToggle = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.875rem;
+  color: #3b82f6;
+  cursor: pointer;
+  font-weight: 600;
+
+  &:hover {
+    color: #2563eb;
+  }
+`
+
 const ButtonRow = styled.div`
   display: flex;
   gap: 0.75rem;
@@ -206,6 +223,7 @@ export const TeachersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
+  const [expandedSkills, setExpandedSkills] = useState<Set<string>>(new Set())
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [generatedCredentials, setGeneratedCredentials] = useState<{
     email: string
@@ -455,15 +473,32 @@ export const TeachersPage: React.FC = () => {
 
                 {teacher.skills && teacher.skills.length > 0 && (
                   <div>
-                    <InfoLabel>対応教科・学年</InfoLabel>
-                    <SkillsList>
-                      {teacher.skills.map((skill, idx) => (
-                        <SkillTag key={idx}>
-                          {skill.subject} ({gradeToDisplay(skill.gradeMin)}〜
-                          {gradeToDisplay(skill.gradeMax)})
-                        </SkillTag>
-                      ))}
-                    </SkillsList>
+                    <SkillsToggle
+                      onClick={() => {
+                        setExpandedSkills(prev => {
+                          const next = new Set(prev)
+                          if (next.has(teacher.id)) {
+                            next.delete(teacher.id)
+                          } else {
+                            next.add(teacher.id)
+                          }
+                          return next
+                        })
+                      }}
+                    >
+                      対応教科・学年（{teacher.skills.length}件）
+                      {expandedSkills.has(teacher.id) ? ' ▲' : ' ▼'}
+                    </SkillsToggle>
+                    {expandedSkills.has(teacher.id) && (
+                      <SkillsList>
+                        {teacher.skills.map((skill, idx) => (
+                          <SkillTag key={idx}>
+                            {skill.subject} ({gradeToDisplay(skill.gradeMin)}〜
+                            {gradeToDisplay(skill.gradeMax)})
+                          </SkillTag>
+                        ))}
+                      </SkillsList>
+                    )}
                   </div>
                 )}
 
